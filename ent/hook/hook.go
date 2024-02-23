@@ -33,6 +33,18 @@ func (f NodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.NodeMutation", m)
 }
 
+// The RegistrationTokenFunc type is an adapter to allow the use of ordinary
+// function as RegistrationToken mutator.
+type RegistrationTokenFunc func(context.Context, *ent.RegistrationTokenMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RegistrationTokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RegistrationTokenMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RegistrationTokenMutation", m)
+}
+
 // The ServerFunc type is an adapter to allow the use of ordinary
 // function as Server mutator.
 type ServerFunc func(context.Context, *ent.ServerMutation) (ent.Value, error)

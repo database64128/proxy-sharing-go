@@ -14,12 +14,12 @@ import (
 // It may be marshaled as or unmarshaled from JSON.
 type Config struct {
 	API      api.Config      `json:"api"`
-	DataBase database.Config `json:"database"`
+	Database database.Config `json:"database"`
 }
 
 // Manager initializes the service manager.
 func (sc *Config) Manager(ctx context.Context, logger *zap.Logger) (*Manager, error) {
-	client, err := sc.DataBase.Open(ctx, logger)
+	client, err := sc.Database.Open(ctx, logger)
 	if err != nil {
 		return nil, err
 	}

@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
 
@@ -75,9 +76,10 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			account.Table: account.ValidColumn,
-			node.Table:    node.ValidColumn,
-			server.Table:  server.ValidColumn,
+			account.Table:           account.ValidColumn,
+			node.Table:              node.ValidColumn,
+			registrationtoken.Table: registrationtoken.ValidColumn,
+			server.Table:            server.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

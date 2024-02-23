@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
 
@@ -29,6 +30,8 @@ type Client struct {
 	Account *AccountClient
 	// Node is the client for interacting with the Node builders.
 	Node *NodeClient
+	// RegistrationToken is the client for interacting with the RegistrationToken builders.
+	RegistrationToken *RegistrationTokenClient
 	// Server is the client for interacting with the Server builders.
 	Server *ServerClient
 }
@@ -44,6 +47,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Account = NewAccountClient(c.config)
 	c.Node = NewNodeClient(c.config)
+	c.RegistrationToken = NewRegistrationTokenClient(c.config)
 	c.Server = NewServerClient(c.config)
 }
 
@@ -135,11 +139,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Account: NewAccountClient(cfg),
-		Node:    NewNodeClient(cfg),
-		Server:  NewServerClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Account:           NewAccountClient(cfg),
+		Node:              NewNodeClient(cfg),
+		RegistrationToken: NewRegistrationTokenClient(cfg),
+		Server:            NewServerClient(cfg),
 	}, nil
 }
 
@@ -157,11 +162,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Account: NewAccountClient(cfg),
-		Node:    NewNodeClient(cfg),
-		Server:  NewServerClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Account:           NewAccountClient(cfg),
+		Node:              NewNodeClient(cfg),
+		RegistrationToken: NewRegistrationTokenClient(cfg),
+		Server:            NewServerClient(cfg),
 	}, nil
 }
 
@@ -192,6 +198,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Account.Use(hooks...)
 	c.Node.Use(hooks...)
+	c.RegistrationToken.Use(hooks...)
 	c.Server.Use(hooks...)
 }
 
@@ -200,6 +207,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Account.Intercept(interceptors...)
 	c.Node.Intercept(interceptors...)
+	c.RegistrationToken.Intercept(interceptors...)
 	c.Server.Intercept(interceptors...)
 }
 
@@ -210,6 +218,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Account.mutate(ctx, m)
 	case *NodeMutation:
 		return c.Node.mutate(ctx, m)
+	case *RegistrationTokenMutation:
+		return c.RegistrationToken.mutate(ctx, m)
 	case *ServerMutation:
 		return c.Server.mutate(ctx, m)
 	default:
@@ -350,6 +360,22 @@ func (c *AccountClient) QueryNodes(a *Account) *NodeQuery {
 			sqlgraph.From(account.Table, account.FieldID, id),
 			sqlgraph.To(node.Table, node.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, account.NodesTable, account.NodesColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRegistrationToken queries the registration_token edge of a Account.
+func (c *AccountClient) QueryRegistrationToken(a *Account) *RegistrationTokenQuery {
+	query := (&RegistrationTokenClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, id),
+			sqlgraph.To(registrationtoken.Table, registrationtoken.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, account.RegistrationTokenTable, account.RegistrationTokenColumn),
 		)
 		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
 		return fromV, nil
@@ -547,6 +573,155 @@ func (c *NodeClient) mutate(ctx context.Context, m *NodeMutation) (Value, error)
 	}
 }
 
+// RegistrationTokenClient is a client for the RegistrationToken schema.
+type RegistrationTokenClient struct {
+	config
+}
+
+// NewRegistrationTokenClient returns a client for the RegistrationToken from the given config.
+func NewRegistrationTokenClient(c config) *RegistrationTokenClient {
+	return &RegistrationTokenClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `registrationtoken.Hooks(f(g(h())))`.
+func (c *RegistrationTokenClient) Use(hooks ...Hook) {
+	c.hooks.RegistrationToken = append(c.hooks.RegistrationToken, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `registrationtoken.Intercept(f(g(h())))`.
+func (c *RegistrationTokenClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RegistrationToken = append(c.inters.RegistrationToken, interceptors...)
+}
+
+// Create returns a builder for creating a RegistrationToken entity.
+func (c *RegistrationTokenClient) Create() *RegistrationTokenCreate {
+	mutation := newRegistrationTokenMutation(c.config, OpCreate)
+	return &RegistrationTokenCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RegistrationToken entities.
+func (c *RegistrationTokenClient) CreateBulk(builders ...*RegistrationTokenCreate) *RegistrationTokenCreateBulk {
+	return &RegistrationTokenCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RegistrationTokenClient) MapCreateBulk(slice any, setFunc func(*RegistrationTokenCreate, int)) *RegistrationTokenCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RegistrationTokenCreateBulk{err: fmt.Errorf("calling to RegistrationTokenClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RegistrationTokenCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RegistrationTokenCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RegistrationToken.
+func (c *RegistrationTokenClient) Update() *RegistrationTokenUpdate {
+	mutation := newRegistrationTokenMutation(c.config, OpUpdate)
+	return &RegistrationTokenUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RegistrationTokenClient) UpdateOne(rt *RegistrationToken) *RegistrationTokenUpdateOne {
+	mutation := newRegistrationTokenMutation(c.config, OpUpdateOne, withRegistrationToken(rt))
+	return &RegistrationTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RegistrationTokenClient) UpdateOneID(id int) *RegistrationTokenUpdateOne {
+	mutation := newRegistrationTokenMutation(c.config, OpUpdateOne, withRegistrationTokenID(id))
+	return &RegistrationTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RegistrationToken.
+func (c *RegistrationTokenClient) Delete() *RegistrationTokenDelete {
+	mutation := newRegistrationTokenMutation(c.config, OpDelete)
+	return &RegistrationTokenDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RegistrationTokenClient) DeleteOne(rt *RegistrationToken) *RegistrationTokenDeleteOne {
+	return c.DeleteOneID(rt.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RegistrationTokenClient) DeleteOneID(id int) *RegistrationTokenDeleteOne {
+	builder := c.Delete().Where(registrationtoken.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RegistrationTokenDeleteOne{builder}
+}
+
+// Query returns a query builder for RegistrationToken.
+func (c *RegistrationTokenClient) Query() *RegistrationTokenQuery {
+	return &RegistrationTokenQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRegistrationToken},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RegistrationToken entity by its id.
+func (c *RegistrationTokenClient) Get(ctx context.Context, id int) (*RegistrationToken, error) {
+	return c.Query().Where(registrationtoken.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RegistrationTokenClient) GetX(ctx context.Context, id int) *RegistrationToken {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRegistrations queries the registrations edge of a RegistrationToken.
+func (c *RegistrationTokenClient) QueryRegistrations(rt *RegistrationToken) *AccountQuery {
+	query := (&AccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rt.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(registrationtoken.Table, registrationtoken.FieldID, id),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, registrationtoken.RegistrationsTable, registrationtoken.RegistrationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(rt.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RegistrationTokenClient) Hooks() []Hook {
+	return c.hooks.RegistrationToken
+}
+
+// Interceptors returns the client interceptors.
+func (c *RegistrationTokenClient) Interceptors() []Interceptor {
+	return c.inters.RegistrationToken
+}
+
+func (c *RegistrationTokenClient) mutate(ctx context.Context, m *RegistrationTokenMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RegistrationTokenCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RegistrationTokenUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RegistrationTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RegistrationTokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RegistrationToken mutation op: %q", m.Op())
+	}
+}
+
 // ServerClient is a client for the Server schema.
 type ServerClient struct {
 	config
@@ -715,9 +890,9 @@ func (c *ServerClient) mutate(ctx context.Context, m *ServerMutation) (Value, er
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Account, Node, Server []ent.Hook
+		Account, Node, RegistrationToken, Server []ent.Hook
 	}
 	inters struct {
-		Account, Node, Server []ent.Interceptor
+		Account, Node, RegistrationToken, Server []ent.Interceptor
 	}
 )

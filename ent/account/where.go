@@ -70,11 +70,6 @@ func Username(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldUsername, v))
 }
 
-// RegistrationToken applies equality check predicate on the "registration_token" field. It's identical to RegistrationTokenEQ.
-func RegistrationToken(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldEQ(FieldRegistrationToken, v))
-}
-
 // AccessToken applies equality check predicate on the "access_token" field. It's identical to AccessTokenEQ.
 func AccessToken(v []byte) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldAccessToken, v))
@@ -230,46 +225,6 @@ func UsernameContainsFold(v string) predicate.Account {
 	return predicate.Account(sql.FieldContainsFold(FieldUsername, v))
 }
 
-// RegistrationTokenEQ applies the EQ predicate on the "registration_token" field.
-func RegistrationTokenEQ(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldEQ(FieldRegistrationToken, v))
-}
-
-// RegistrationTokenNEQ applies the NEQ predicate on the "registration_token" field.
-func RegistrationTokenNEQ(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldNEQ(FieldRegistrationToken, v))
-}
-
-// RegistrationTokenIn applies the In predicate on the "registration_token" field.
-func RegistrationTokenIn(vs ...[]byte) predicate.Account {
-	return predicate.Account(sql.FieldIn(FieldRegistrationToken, vs...))
-}
-
-// RegistrationTokenNotIn applies the NotIn predicate on the "registration_token" field.
-func RegistrationTokenNotIn(vs ...[]byte) predicate.Account {
-	return predicate.Account(sql.FieldNotIn(FieldRegistrationToken, vs...))
-}
-
-// RegistrationTokenGT applies the GT predicate on the "registration_token" field.
-func RegistrationTokenGT(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldGT(FieldRegistrationToken, v))
-}
-
-// RegistrationTokenGTE applies the GTE predicate on the "registration_token" field.
-func RegistrationTokenGTE(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldGTE(FieldRegistrationToken, v))
-}
-
-// RegistrationTokenLT applies the LT predicate on the "registration_token" field.
-func RegistrationTokenLT(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldLT(FieldRegistrationToken, v))
-}
-
-// RegistrationTokenLTE applies the LTE predicate on the "registration_token" field.
-func RegistrationTokenLTE(v []byte) predicate.Account {
-	return predicate.Account(sql.FieldLTE(FieldRegistrationToken, v))
-}
-
 // AccessTokenEQ applies the EQ predicate on the "access_token" field.
 func AccessTokenEQ(v []byte) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldAccessToken, v))
@@ -388,6 +343,29 @@ func HasNodes() predicate.Account {
 func HasNodesWith(preds ...predicate.Node) predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
 		step := newNodesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRegistrationToken applies the HasEdge predicate on the "registration_token" edge.
+func HasRegistrationToken() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, RegistrationTokenTable, RegistrationTokenColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRegistrationTokenWith applies the HasEdge predicate on the "registration_token" edge with a given conditions (other predicates).
+func HasRegistrationTokenWith(preds ...predicate.RegistrationToken) predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := newRegistrationTokenStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

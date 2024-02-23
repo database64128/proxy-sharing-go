@@ -20,8 +20,6 @@ const (
 	FieldUpdateTime = "update_time"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
-	// FieldRegistrationToken holds the string denoting the registration_token field in the database.
-	FieldRegistrationToken = "registration_token"
 	// FieldAccessToken holds the string denoting the access_token field in the database.
 	FieldAccessToken = "access_token"
 	// FieldRefreshToken holds the string denoting the refresh_token field in the database.
@@ -30,6 +28,8 @@ const (
 	EdgeServers = "servers"
 	// EdgeNodes holds the string denoting the nodes edge name in mutations.
 	EdgeNodes = "nodes"
+	// EdgeRegistrationToken holds the string denoting the registration_token edge name in mutations.
+	EdgeRegistrationToken = "registration_token"
 	// Table holds the table name of the account in the database.
 	Table = "accounts"
 	// ServersTable is the table that holds the servers relation/edge.
@@ -46,6 +46,13 @@ const (
 	NodesInverseTable = "nodes"
 	// NodesColumn is the table column denoting the nodes relation/edge.
 	NodesColumn = "account_nodes"
+	// RegistrationTokenTable is the table that holds the registration_token relation/edge.
+	RegistrationTokenTable = "accounts"
+	// RegistrationTokenInverseTable is the table name for the RegistrationToken entity.
+	// It exists in this package in order to avoid circular dependency with the "registrationtoken" package.
+	RegistrationTokenInverseTable = "registration_tokens"
+	// RegistrationTokenColumn is the table column denoting the registration_token relation/edge.
+	RegistrationTokenColumn = "registration_token_registrations"
 )
 
 // Columns holds all SQL columns for account fields.
@@ -54,15 +61,25 @@ var Columns = []string{
 	FieldCreateTime,
 	FieldUpdateTime,
 	FieldUsername,
-	FieldRegistrationToken,
 	FieldAccessToken,
 	FieldRefreshToken,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "accounts"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"registration_token_registrations",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -78,8 +95,6 @@ var (
 	UpdateDefaultUpdateTime func() time.Time
 	// UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	UsernameValidator func(string) error
-	// RegistrationTokenValidator is a validator for the "registration_token" field. It is called by the builders before save.
-	RegistrationTokenValidator func([]byte) error
 	// AccessTokenValidator is a validator for the "access_token" field. It is called by the builders before save.
 	AccessTokenValidator func([]byte) error
 	// RefreshTokenValidator is a validator for the "refresh_token" field. It is called by the builders before save.
@@ -136,6 +151,13 @@ func ByNodes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newNodesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRegistrationTokenField orders the results by registration_token field.
+func ByRegistrationTokenField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRegistrationTokenStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newServersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -148,5 +170,12 @@ func newNodesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(NodesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, NodesTable, NodesColumn),
+	)
+}
+func newRegistrationTokenStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RegistrationTokenInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, RegistrationTokenTable, RegistrationTokenColumn),
 	)
 }

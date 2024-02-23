@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/database64128/proxy-sharing-go/ent/account"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 )
 
 // Account is the model entity for the Account schema.
@@ -23,16 +24,15 @@ type Account struct {
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Username is the unique username of the account.
 	Username string `json:"username,omitempty"`
-	// RegistrationToken is the token used to register the account.
-	RegistrationToken []byte `json:"registration_token,omitempty"`
 	// AccessToken is the token used to access the account.
 	AccessToken []byte `json:"access_token,omitempty"`
 	// RefreshToken is the token used to refresh the account.
 	RefreshToken []byte `json:"refresh_token,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AccountQuery when eager-loading is set.
-	Edges        AccountEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges                            AccountEdges `json:"edges"`
+	registration_token_registrations *int
+	selectValues                     sql.SelectValues
 }
 
 // AccountEdges holds the relations/edges for other nodes in the graph.
@@ -41,9 +41,11 @@ type AccountEdges struct {
 	Servers []*Server `json:"servers,omitempty"`
 	// Nodes holds the value of the nodes edge.
 	Nodes []*Node `json:"nodes,omitempty"`
+	// RegistrationToken holds the value of the registration_token edge.
+	RegistrationToken *RegistrationToken `json:"registration_token,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // ServersOrErr returns the Servers value or an error if the edge
@@ -64,12 +66,25 @@ func (e AccountEdges) NodesOrErr() ([]*Node, error) {
 	return nil, &NotLoadedError{edge: "nodes"}
 }
 
+// RegistrationTokenOrErr returns the RegistrationToken value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AccountEdges) RegistrationTokenOrErr() (*RegistrationToken, error) {
+	if e.loadedTypes[2] {
+		if e.RegistrationToken == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: registrationtoken.Label}
+		}
+		return e.RegistrationToken, nil
+	}
+	return nil, &NotLoadedError{edge: "registration_token"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Account) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case account.FieldRegistrationToken, account.FieldAccessToken, account.FieldRefreshToken:
+		case account.FieldAccessToken, account.FieldRefreshToken:
 			values[i] = new([]byte)
 		case account.FieldID:
 			values[i] = new(sql.NullInt64)
@@ -77,6 +92,8 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case account.FieldCreateTime, account.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
+		case account.ForeignKeys[0]: // registration_token_registrations
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -116,12 +133,6 @@ func (a *Account) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				a.Username = value.String
 			}
-		case account.FieldRegistrationToken:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field registration_token", values[i])
-			} else if value != nil {
-				a.RegistrationToken = *value
-			}
 		case account.FieldAccessToken:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field access_token", values[i])
@@ -133,6 +144,13 @@ func (a *Account) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field refresh_token", values[i])
 			} else if value != nil {
 				a.RefreshToken = *value
+			}
+		case account.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field registration_token_registrations", value)
+			} else if value.Valid {
+				a.registration_token_registrations = new(int)
+				*a.registration_token_registrations = int(value.Int64)
 			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
@@ -155,6 +173,11 @@ func (a *Account) QueryServers() *ServerQuery {
 // QueryNodes queries the "nodes" edge of the Account entity.
 func (a *Account) QueryNodes() *NodeQuery {
 	return NewAccountClient(a.config).QueryNodes(a)
+}
+
+// QueryRegistrationToken queries the "registration_token" edge of the Account entity.
+func (a *Account) QueryRegistrationToken() *RegistrationTokenQuery {
+	return NewAccountClient(a.config).QueryRegistrationToken(a)
 }
 
 // Update returns a builder for updating this Account.
@@ -188,9 +211,6 @@ func (a *Account) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("username=")
 	builder.WriteString(a.Username)
-	builder.WriteString(", ")
-	builder.WriteString("registration_token=")
-	builder.WriteString(fmt.Sprintf("%v", a.RegistrationToken))
 	builder.WriteString(", ")
 	builder.WriteString("access_token=")
 	builder.WriteString(fmt.Sprintf("%v", a.AccessToken))

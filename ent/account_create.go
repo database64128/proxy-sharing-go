@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
 
@@ -56,12 +57,6 @@ func (ac *AccountCreate) SetUsername(s string) *AccountCreate {
 	return ac
 }
 
-// SetRegistrationToken sets the "registration_token" field.
-func (ac *AccountCreate) SetRegistrationToken(b []byte) *AccountCreate {
-	ac.mutation.SetRegistrationToken(b)
-	return ac
-}
-
 // SetAccessToken sets the "access_token" field.
 func (ac *AccountCreate) SetAccessToken(b []byte) *AccountCreate {
 	ac.mutation.SetAccessToken(b)
@@ -102,6 +97,17 @@ func (ac *AccountCreate) AddNodes(n ...*Node) *AccountCreate {
 		ids[i] = n[i].ID
 	}
 	return ac.AddNodeIDs(ids...)
+}
+
+// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by ID.
+func (ac *AccountCreate) SetRegistrationTokenID(id int) *AccountCreate {
+	ac.mutation.SetRegistrationTokenID(id)
+	return ac
+}
+
+// SetRegistrationToken sets the "registration_token" edge to the RegistrationToken entity.
+func (ac *AccountCreate) SetRegistrationToken(r *RegistrationToken) *AccountCreate {
+	return ac.SetRegistrationTokenID(r.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -165,14 +171,6 @@ func (ac *AccountCreate) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "Account.username": %w`, err)}
 		}
 	}
-	if _, ok := ac.mutation.RegistrationToken(); !ok {
-		return &ValidationError{Name: "registration_token", err: errors.New(`ent: missing required field "Account.registration_token"`)}
-	}
-	if v, ok := ac.mutation.RegistrationToken(); ok {
-		if err := account.RegistrationTokenValidator(v); err != nil {
-			return &ValidationError{Name: "registration_token", err: fmt.Errorf(`ent: validator failed for field "Account.registration_token": %w`, err)}
-		}
-	}
 	if _, ok := ac.mutation.AccessToken(); !ok {
 		return &ValidationError{Name: "access_token", err: errors.New(`ent: missing required field "Account.access_token"`)}
 	}
@@ -188,6 +186,9 @@ func (ac *AccountCreate) check() error {
 		if err := account.RefreshTokenValidator(v); err != nil {
 			return &ValidationError{Name: "refresh_token", err: fmt.Errorf(`ent: validator failed for field "Account.refresh_token": %w`, err)}
 		}
+	}
+	if _, ok := ac.mutation.RegistrationTokenID(); !ok {
+		return &ValidationError{Name: "registration_token", err: errors.New(`ent: missing required edge "Account.registration_token"`)}
 	}
 	return nil
 }
@@ -227,10 +228,6 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_spec.SetField(account.FieldUsername, field.TypeString, value)
 		_node.Username = value
 	}
-	if value, ok := ac.mutation.RegistrationToken(); ok {
-		_spec.SetField(account.FieldRegistrationToken, field.TypeBytes, value)
-		_node.RegistrationToken = value
-	}
 	if value, ok := ac.mutation.AccessToken(); ok {
 		_spec.SetField(account.FieldAccessToken, field.TypeBytes, value)
 		_node.AccessToken = value
@@ -269,6 +266,23 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.RegistrationTokenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.RegistrationTokenTable,
+			Columns: []string{account.RegistrationTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(registrationtoken.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.registration_token_registrations = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

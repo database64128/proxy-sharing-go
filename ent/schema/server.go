@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -33,7 +34,8 @@ func (Server) Fields() []ent.Field {
 // Edges of the Server.
 func (Server) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("nodes", Node.Type),
+		edge.To("nodes", Node.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.From("account", Account.Type).
 			Ref("servers").
 			Unique().
@@ -44,6 +46,8 @@ func (Server) Edges() []ent.Edge {
 // Indexes of the Server.
 func (Server) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("name").
+			Unique(),
 		index.Edges("account"),
 	}
 }

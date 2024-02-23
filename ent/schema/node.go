@@ -47,6 +47,8 @@ func (Node) Edges() []ent.Edge {
 // Indexes of the Node.
 func (Node) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("name").
+			Unique(),
 		index.Edges("account"),
 		index.Edges("server"),
 	}

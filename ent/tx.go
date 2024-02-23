@@ -16,6 +16,8 @@ type Tx struct {
 	Account *AccountClient
 	// Node is the client for interacting with the Node builders.
 	Node *NodeClient
+	// RegistrationToken is the client for interacting with the RegistrationToken builders.
+	RegistrationToken *RegistrationTokenClient
 	// Server is the client for interacting with the Server builders.
 	Server *ServerClient
 
@@ -151,6 +153,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Account = NewAccountClient(tx.config)
 	tx.Node = NewNodeClient(tx.config)
+	tx.RegistrationToken = NewRegistrationTokenClient(tx.config)
 	tx.Server = NewServerClient(tx.config)
 }
 

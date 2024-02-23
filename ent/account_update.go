@@ -14,6 +14,7 @@ import (
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
 	"github.com/database64128/proxy-sharing-go/ent/predicate"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
 
@@ -47,12 +48,6 @@ func (au *AccountUpdate) SetNillableUsername(s *string) *AccountUpdate {
 	if s != nil {
 		au.SetUsername(*s)
 	}
-	return au
-}
-
-// SetRegistrationToken sets the "registration_token" field.
-func (au *AccountUpdate) SetRegistrationToken(b []byte) *AccountUpdate {
-	au.mutation.SetRegistrationToken(b)
 	return au
 }
 
@@ -96,6 +91,17 @@ func (au *AccountUpdate) AddNodes(n ...*Node) *AccountUpdate {
 		ids[i] = n[i].ID
 	}
 	return au.AddNodeIDs(ids...)
+}
+
+// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by ID.
+func (au *AccountUpdate) SetRegistrationTokenID(id int) *AccountUpdate {
+	au.mutation.SetRegistrationTokenID(id)
+	return au
+}
+
+// SetRegistrationToken sets the "registration_token" edge to the RegistrationToken entity.
+func (au *AccountUpdate) SetRegistrationToken(r *RegistrationToken) *AccountUpdate {
+	return au.SetRegistrationTokenID(r.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -145,6 +151,12 @@ func (au *AccountUpdate) RemoveNodes(n ...*Node) *AccountUpdate {
 	return au.RemoveNodeIDs(ids...)
 }
 
+// ClearRegistrationToken clears the "registration_token" edge to the RegistrationToken entity.
+func (au *AccountUpdate) ClearRegistrationToken() *AccountUpdate {
+	au.mutation.ClearRegistrationToken()
+	return au
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (au *AccountUpdate) Save(ctx context.Context) (int, error) {
 	au.defaults()
@@ -188,11 +200,6 @@ func (au *AccountUpdate) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "Account.username": %w`, err)}
 		}
 	}
-	if v, ok := au.mutation.RegistrationToken(); ok {
-		if err := account.RegistrationTokenValidator(v); err != nil {
-			return &ValidationError{Name: "registration_token", err: fmt.Errorf(`ent: validator failed for field "Account.registration_token": %w`, err)}
-		}
-	}
 	if v, ok := au.mutation.AccessToken(); ok {
 		if err := account.AccessTokenValidator(v); err != nil {
 			return &ValidationError{Name: "access_token", err: fmt.Errorf(`ent: validator failed for field "Account.access_token": %w`, err)}
@@ -202,6 +209,9 @@ func (au *AccountUpdate) check() error {
 		if err := account.RefreshTokenValidator(v); err != nil {
 			return &ValidationError{Name: "refresh_token", err: fmt.Errorf(`ent: validator failed for field "Account.refresh_token": %w`, err)}
 		}
+	}
+	if _, ok := au.mutation.RegistrationTokenID(); au.mutation.RegistrationTokenCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Account.registration_token"`)
 	}
 	return nil
 }
@@ -223,9 +233,6 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := au.mutation.Username(); ok {
 		_spec.SetField(account.FieldUsername, field.TypeString, value)
-	}
-	if value, ok := au.mutation.RegistrationToken(); ok {
-		_spec.SetField(account.FieldRegistrationToken, field.TypeBytes, value)
 	}
 	if value, ok := au.mutation.AccessToken(); ok {
 		_spec.SetField(account.FieldAccessToken, field.TypeBytes, value)
@@ -323,6 +330,35 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if au.mutation.RegistrationTokenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.RegistrationTokenTable,
+			Columns: []string{account.RegistrationTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(registrationtoken.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RegistrationTokenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.RegistrationTokenTable,
+			Columns: []string{account.RegistrationTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(registrationtoken.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{account.Label}
@@ -360,12 +396,6 @@ func (auo *AccountUpdateOne) SetNillableUsername(s *string) *AccountUpdateOne {
 	if s != nil {
 		auo.SetUsername(*s)
 	}
-	return auo
-}
-
-// SetRegistrationToken sets the "registration_token" field.
-func (auo *AccountUpdateOne) SetRegistrationToken(b []byte) *AccountUpdateOne {
-	auo.mutation.SetRegistrationToken(b)
 	return auo
 }
 
@@ -409,6 +439,17 @@ func (auo *AccountUpdateOne) AddNodes(n ...*Node) *AccountUpdateOne {
 		ids[i] = n[i].ID
 	}
 	return auo.AddNodeIDs(ids...)
+}
+
+// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by ID.
+func (auo *AccountUpdateOne) SetRegistrationTokenID(id int) *AccountUpdateOne {
+	auo.mutation.SetRegistrationTokenID(id)
+	return auo
+}
+
+// SetRegistrationToken sets the "registration_token" edge to the RegistrationToken entity.
+func (auo *AccountUpdateOne) SetRegistrationToken(r *RegistrationToken) *AccountUpdateOne {
+	return auo.SetRegistrationTokenID(r.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -456,6 +497,12 @@ func (auo *AccountUpdateOne) RemoveNodes(n ...*Node) *AccountUpdateOne {
 		ids[i] = n[i].ID
 	}
 	return auo.RemoveNodeIDs(ids...)
+}
+
+// ClearRegistrationToken clears the "registration_token" edge to the RegistrationToken entity.
+func (auo *AccountUpdateOne) ClearRegistrationToken() *AccountUpdateOne {
+	auo.mutation.ClearRegistrationToken()
+	return auo
 }
 
 // Where appends a list predicates to the AccountUpdate builder.
@@ -514,11 +561,6 @@ func (auo *AccountUpdateOne) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "Account.username": %w`, err)}
 		}
 	}
-	if v, ok := auo.mutation.RegistrationToken(); ok {
-		if err := account.RegistrationTokenValidator(v); err != nil {
-			return &ValidationError{Name: "registration_token", err: fmt.Errorf(`ent: validator failed for field "Account.registration_token": %w`, err)}
-		}
-	}
 	if v, ok := auo.mutation.AccessToken(); ok {
 		if err := account.AccessTokenValidator(v); err != nil {
 			return &ValidationError{Name: "access_token", err: fmt.Errorf(`ent: validator failed for field "Account.access_token": %w`, err)}
@@ -528,6 +570,9 @@ func (auo *AccountUpdateOne) check() error {
 		if err := account.RefreshTokenValidator(v); err != nil {
 			return &ValidationError{Name: "refresh_token", err: fmt.Errorf(`ent: validator failed for field "Account.refresh_token": %w`, err)}
 		}
+	}
+	if _, ok := auo.mutation.RegistrationTokenID(); auo.mutation.RegistrationTokenCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Account.registration_token"`)
 	}
 	return nil
 }
@@ -566,9 +611,6 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 	}
 	if value, ok := auo.mutation.Username(); ok {
 		_spec.SetField(account.FieldUsername, field.TypeString, value)
-	}
-	if value, ok := auo.mutation.RegistrationToken(); ok {
-		_spec.SetField(account.FieldRegistrationToken, field.TypeBytes, value)
 	}
 	if value, ok := auo.mutation.AccessToken(); ok {
 		_spec.SetField(account.FieldAccessToken, field.TypeBytes, value)
@@ -659,6 +701,35 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if auo.mutation.RegistrationTokenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.RegistrationTokenTable,
+			Columns: []string{account.RegistrationTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(registrationtoken.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RegistrationTokenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.RegistrationTokenTable,
+			Columns: []string{account.RegistrationTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(registrationtoken.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

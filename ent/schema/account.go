@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
@@ -27,9 +28,6 @@ func (Account) Fields() []ent.Field {
 			Unique().
 			NotEmpty().
 			Comment("Username is the unique username of the account."),
-		field.Bytes("registration_token").
-			NotEmpty().
-			Comment("RegistrationToken is the token used to register the account."),
 		field.Bytes("access_token").
 			Unique().
 			NotEmpty().
@@ -44,8 +42,14 @@ func (Account) Fields() []ent.Field {
 // Edges of the Account.
 func (Account) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("servers", Server.Type),
-		edge.To("nodes", Node.Type),
+		edge.To("servers", Server.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("nodes", Node.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.From("registration_token", RegistrationToken.Type).
+			Ref("registrations").
+			Unique().
+			Required(),
 	}
 }
 

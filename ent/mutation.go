@@ -14,6 +14,7 @@ import (
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
 	"github.com/database64128/proxy-sharing-go/ent/predicate"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
 
@@ -26,33 +27,35 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAccount = "Account"
-	TypeNode    = "Node"
-	TypeServer  = "Server"
+	TypeAccount           = "Account"
+	TypeNode              = "Node"
+	TypeRegistrationToken = "RegistrationToken"
+	TypeServer            = "Server"
 )
 
 // AccountMutation represents an operation that mutates the Account nodes in the graph.
 type AccountMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int
-	create_time        *time.Time
-	update_time        *time.Time
-	username           *string
-	registration_token *[]byte
-	access_token       *[]byte
-	refresh_token      *[]byte
-	clearedFields      map[string]struct{}
-	servers            map[int]struct{}
-	removedservers     map[int]struct{}
-	clearedservers     bool
-	nodes              map[int]struct{}
-	removednodes       map[int]struct{}
-	clearednodes       bool
-	done               bool
-	oldValue           func(context.Context) (*Account, error)
-	predicates         []predicate.Account
+	op                        Op
+	typ                       string
+	id                        *int
+	create_time               *time.Time
+	update_time               *time.Time
+	username                  *string
+	access_token              *[]byte
+	refresh_token             *[]byte
+	clearedFields             map[string]struct{}
+	servers                   map[int]struct{}
+	removedservers            map[int]struct{}
+	clearedservers            bool
+	nodes                     map[int]struct{}
+	removednodes              map[int]struct{}
+	clearednodes              bool
+	registration_token        *int
+	clearedregistration_token bool
+	done                      bool
+	oldValue                  func(context.Context) (*Account, error)
+	predicates                []predicate.Account
 }
 
 var _ ent.Mutation = (*AccountMutation)(nil)
@@ -261,42 +264,6 @@ func (m *AccountMutation) ResetUsername() {
 	m.username = nil
 }
 
-// SetRegistrationToken sets the "registration_token" field.
-func (m *AccountMutation) SetRegistrationToken(b []byte) {
-	m.registration_token = &b
-}
-
-// RegistrationToken returns the value of the "registration_token" field in the mutation.
-func (m *AccountMutation) RegistrationToken() (r []byte, exists bool) {
-	v := m.registration_token
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldRegistrationToken returns the old "registration_token" field's value of the Account entity.
-// If the Account object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountMutation) OldRegistrationToken(ctx context.Context) (v []byte, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRegistrationToken is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRegistrationToken requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRegistrationToken: %w", err)
-	}
-	return oldValue.RegistrationToken, nil
-}
-
-// ResetRegistrationToken resets all changes to the "registration_token" field.
-func (m *AccountMutation) ResetRegistrationToken() {
-	m.registration_token = nil
-}
-
 // SetAccessToken sets the "access_token" field.
 func (m *AccountMutation) SetAccessToken(b []byte) {
 	m.access_token = &b
@@ -477,6 +444,45 @@ func (m *AccountMutation) ResetNodes() {
 	m.removednodes = nil
 }
 
+// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by id.
+func (m *AccountMutation) SetRegistrationTokenID(id int) {
+	m.registration_token = &id
+}
+
+// ClearRegistrationToken clears the "registration_token" edge to the RegistrationToken entity.
+func (m *AccountMutation) ClearRegistrationToken() {
+	m.clearedregistration_token = true
+}
+
+// RegistrationTokenCleared reports if the "registration_token" edge to the RegistrationToken entity was cleared.
+func (m *AccountMutation) RegistrationTokenCleared() bool {
+	return m.clearedregistration_token
+}
+
+// RegistrationTokenID returns the "registration_token" edge ID in the mutation.
+func (m *AccountMutation) RegistrationTokenID() (id int, exists bool) {
+	if m.registration_token != nil {
+		return *m.registration_token, true
+	}
+	return
+}
+
+// RegistrationTokenIDs returns the "registration_token" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RegistrationTokenID instead. It exists only for internal usage by the builders.
+func (m *AccountMutation) RegistrationTokenIDs() (ids []int) {
+	if id := m.registration_token; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRegistrationToken resets all changes to the "registration_token" edge.
+func (m *AccountMutation) ResetRegistrationToken() {
+	m.registration_token = nil
+	m.clearedregistration_token = false
+}
+
 // Where appends a list predicates to the AccountMutation builder.
 func (m *AccountMutation) Where(ps ...predicate.Account) {
 	m.predicates = append(m.predicates, ps...)
@@ -511,7 +517,7 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 5)
 	if m.create_time != nil {
 		fields = append(fields, account.FieldCreateTime)
 	}
@@ -520,9 +526,6 @@ func (m *AccountMutation) Fields() []string {
 	}
 	if m.username != nil {
 		fields = append(fields, account.FieldUsername)
-	}
-	if m.registration_token != nil {
-		fields = append(fields, account.FieldRegistrationToken)
 	}
 	if m.access_token != nil {
 		fields = append(fields, account.FieldAccessToken)
@@ -544,8 +547,6 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdateTime()
 	case account.FieldUsername:
 		return m.Username()
-	case account.FieldRegistrationToken:
-		return m.RegistrationToken()
 	case account.FieldAccessToken:
 		return m.AccessToken()
 	case account.FieldRefreshToken:
@@ -565,8 +566,6 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldUpdateTime(ctx)
 	case account.FieldUsername:
 		return m.OldUsername(ctx)
-	case account.FieldRegistrationToken:
-		return m.OldRegistrationToken(ctx)
 	case account.FieldAccessToken:
 		return m.OldAccessToken(ctx)
 	case account.FieldRefreshToken:
@@ -600,13 +599,6 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUsername(v)
-		return nil
-	case account.FieldRegistrationToken:
-		v, ok := value.([]byte)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetRegistrationToken(v)
 		return nil
 	case account.FieldAccessToken:
 		v, ok := value.([]byte)
@@ -680,9 +672,6 @@ func (m *AccountMutation) ResetField(name string) error {
 	case account.FieldUsername:
 		m.ResetUsername()
 		return nil
-	case account.FieldRegistrationToken:
-		m.ResetRegistrationToken()
-		return nil
 	case account.FieldAccessToken:
 		m.ResetAccessToken()
 		return nil
@@ -695,12 +684,15 @@ func (m *AccountMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *AccountMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.servers != nil {
 		edges = append(edges, account.EdgeServers)
 	}
 	if m.nodes != nil {
 		edges = append(edges, account.EdgeNodes)
+	}
+	if m.registration_token != nil {
+		edges = append(edges, account.EdgeRegistrationToken)
 	}
 	return edges
 }
@@ -721,13 +713,17 @@ func (m *AccountMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case account.EdgeRegistrationToken:
+		if id := m.registration_token; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *AccountMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedservers != nil {
 		edges = append(edges, account.EdgeServers)
 	}
@@ -759,12 +755,15 @@ func (m *AccountMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *AccountMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedservers {
 		edges = append(edges, account.EdgeServers)
 	}
 	if m.clearednodes {
 		edges = append(edges, account.EdgeNodes)
+	}
+	if m.clearedregistration_token {
+		edges = append(edges, account.EdgeRegistrationToken)
 	}
 	return edges
 }
@@ -777,6 +776,8 @@ func (m *AccountMutation) EdgeCleared(name string) bool {
 		return m.clearedservers
 	case account.EdgeNodes:
 		return m.clearednodes
+	case account.EdgeRegistrationToken:
+		return m.clearedregistration_token
 	}
 	return false
 }
@@ -785,6 +786,9 @@ func (m *AccountMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *AccountMutation) ClearEdge(name string) error {
 	switch name {
+	case account.EdgeRegistrationToken:
+		m.ClearRegistrationToken()
+		return nil
 	}
 	return fmt.Errorf("unknown Account unique edge %s", name)
 }
@@ -798,6 +802,9 @@ func (m *AccountMutation) ResetEdge(name string) error {
 		return nil
 	case account.EdgeNodes:
 		m.ResetNodes()
+		return nil
+	case account.EdgeRegistrationToken:
+		m.ResetRegistrationToken()
 		return nil
 	}
 	return fmt.Errorf("unknown Account edge %s", name)
@@ -1361,6 +1368,587 @@ func (m *NodeMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Node edge %s", name)
+}
+
+// RegistrationTokenMutation represents an operation that mutates the RegistrationToken nodes in the graph.
+type RegistrationTokenMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *int
+	create_time          *time.Time
+	update_time          *time.Time
+	name                 *string
+	token                *[]byte
+	clearedFields        map[string]struct{}
+	registrations        map[int]struct{}
+	removedregistrations map[int]struct{}
+	clearedregistrations bool
+	done                 bool
+	oldValue             func(context.Context) (*RegistrationToken, error)
+	predicates           []predicate.RegistrationToken
+}
+
+var _ ent.Mutation = (*RegistrationTokenMutation)(nil)
+
+// registrationtokenOption allows management of the mutation configuration using functional options.
+type registrationtokenOption func(*RegistrationTokenMutation)
+
+// newRegistrationTokenMutation creates new mutation for the RegistrationToken entity.
+func newRegistrationTokenMutation(c config, op Op, opts ...registrationtokenOption) *RegistrationTokenMutation {
+	m := &RegistrationTokenMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRegistrationToken,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRegistrationTokenID sets the ID field of the mutation.
+func withRegistrationTokenID(id int) registrationtokenOption {
+	return func(m *RegistrationTokenMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RegistrationToken
+		)
+		m.oldValue = func(ctx context.Context) (*RegistrationToken, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RegistrationToken.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRegistrationToken sets the old RegistrationToken of the mutation.
+func withRegistrationToken(node *RegistrationToken) registrationtokenOption {
+	return func(m *RegistrationTokenMutation) {
+		m.oldValue = func(context.Context) (*RegistrationToken, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RegistrationTokenMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RegistrationTokenMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RegistrationTokenMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RegistrationTokenMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RegistrationToken.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *RegistrationTokenMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *RegistrationTokenMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the RegistrationToken entity.
+// If the RegistrationToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistrationTokenMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *RegistrationTokenMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *RegistrationTokenMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *RegistrationTokenMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the RegistrationToken entity.
+// If the RegistrationToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistrationTokenMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *RegistrationTokenMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetName sets the "name" field.
+func (m *RegistrationTokenMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RegistrationTokenMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RegistrationToken entity.
+// If the RegistrationToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistrationTokenMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RegistrationTokenMutation) ResetName() {
+	m.name = nil
+}
+
+// SetToken sets the "token" field.
+func (m *RegistrationTokenMutation) SetToken(b []byte) {
+	m.token = &b
+}
+
+// Token returns the value of the "token" field in the mutation.
+func (m *RegistrationTokenMutation) Token() (r []byte, exists bool) {
+	v := m.token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldToken returns the old "token" field's value of the RegistrationToken entity.
+// If the RegistrationToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistrationTokenMutation) OldToken(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldToken: %w", err)
+	}
+	return oldValue.Token, nil
+}
+
+// ResetToken resets all changes to the "token" field.
+func (m *RegistrationTokenMutation) ResetToken() {
+	m.token = nil
+}
+
+// AddRegistrationIDs adds the "registrations" edge to the Account entity by ids.
+func (m *RegistrationTokenMutation) AddRegistrationIDs(ids ...int) {
+	if m.registrations == nil {
+		m.registrations = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.registrations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRegistrations clears the "registrations" edge to the Account entity.
+func (m *RegistrationTokenMutation) ClearRegistrations() {
+	m.clearedregistrations = true
+}
+
+// RegistrationsCleared reports if the "registrations" edge to the Account entity was cleared.
+func (m *RegistrationTokenMutation) RegistrationsCleared() bool {
+	return m.clearedregistrations
+}
+
+// RemoveRegistrationIDs removes the "registrations" edge to the Account entity by IDs.
+func (m *RegistrationTokenMutation) RemoveRegistrationIDs(ids ...int) {
+	if m.removedregistrations == nil {
+		m.removedregistrations = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.registrations, ids[i])
+		m.removedregistrations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRegistrations returns the removed IDs of the "registrations" edge to the Account entity.
+func (m *RegistrationTokenMutation) RemovedRegistrationsIDs() (ids []int) {
+	for id := range m.removedregistrations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RegistrationsIDs returns the "registrations" edge IDs in the mutation.
+func (m *RegistrationTokenMutation) RegistrationsIDs() (ids []int) {
+	for id := range m.registrations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRegistrations resets all changes to the "registrations" edge.
+func (m *RegistrationTokenMutation) ResetRegistrations() {
+	m.registrations = nil
+	m.clearedregistrations = false
+	m.removedregistrations = nil
+}
+
+// Where appends a list predicates to the RegistrationTokenMutation builder.
+func (m *RegistrationTokenMutation) Where(ps ...predicate.RegistrationToken) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RegistrationTokenMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RegistrationTokenMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RegistrationToken, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RegistrationTokenMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RegistrationTokenMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RegistrationToken).
+func (m *RegistrationTokenMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RegistrationTokenMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.create_time != nil {
+		fields = append(fields, registrationtoken.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, registrationtoken.FieldUpdateTime)
+	}
+	if m.name != nil {
+		fields = append(fields, registrationtoken.FieldName)
+	}
+	if m.token != nil {
+		fields = append(fields, registrationtoken.FieldToken)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RegistrationTokenMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case registrationtoken.FieldCreateTime:
+		return m.CreateTime()
+	case registrationtoken.FieldUpdateTime:
+		return m.UpdateTime()
+	case registrationtoken.FieldName:
+		return m.Name()
+	case registrationtoken.FieldToken:
+		return m.Token()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RegistrationTokenMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case registrationtoken.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case registrationtoken.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case registrationtoken.FieldName:
+		return m.OldName(ctx)
+	case registrationtoken.FieldToken:
+		return m.OldToken(ctx)
+	}
+	return nil, fmt.Errorf("unknown RegistrationToken field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RegistrationTokenMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case registrationtoken.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case registrationtoken.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case registrationtoken.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case registrationtoken.FieldToken:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetToken(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RegistrationToken field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RegistrationTokenMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RegistrationTokenMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RegistrationTokenMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RegistrationToken numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RegistrationTokenMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RegistrationTokenMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RegistrationTokenMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown RegistrationToken nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RegistrationTokenMutation) ResetField(name string) error {
+	switch name {
+	case registrationtoken.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case registrationtoken.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case registrationtoken.FieldName:
+		m.ResetName()
+		return nil
+	case registrationtoken.FieldToken:
+		m.ResetToken()
+		return nil
+	}
+	return fmt.Errorf("unknown RegistrationToken field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RegistrationTokenMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.registrations != nil {
+		edges = append(edges, registrationtoken.EdgeRegistrations)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RegistrationTokenMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case registrationtoken.EdgeRegistrations:
+		ids := make([]ent.Value, 0, len(m.registrations))
+		for id := range m.registrations {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RegistrationTokenMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedregistrations != nil {
+		edges = append(edges, registrationtoken.EdgeRegistrations)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RegistrationTokenMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case registrationtoken.EdgeRegistrations:
+		ids := make([]ent.Value, 0, len(m.removedregistrations))
+		for id := range m.removedregistrations {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RegistrationTokenMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedregistrations {
+		edges = append(edges, registrationtoken.EdgeRegistrations)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RegistrationTokenMutation) EdgeCleared(name string) bool {
+	switch name {
+	case registrationtoken.EdgeRegistrations:
+		return m.clearedregistrations
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RegistrationTokenMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RegistrationToken unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RegistrationTokenMutation) ResetEdge(name string) error {
+	switch name {
+	case registrationtoken.EdgeRegistrations:
+		m.ResetRegistrations()
+		return nil
+	}
+	return fmt.Errorf("unknown RegistrationToken edge %s", name)
 }
 
 // ServerMutation represents an operation that mutates the Server nodes in the graph.

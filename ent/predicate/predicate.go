@@ -12,5 +12,8 @@ type Account func(*sql.Selector)
 // Node is the predicate function for node builders.
 type Node func(*sql.Selector)
 
+// RegistrationToken is the predicate function for registrationtoken builders.
+type RegistrationToken func(*sql.Selector)
+
 // Server is the predicate function for server builders.
 type Server func(*sql.Selector)

@@ -14,15 +14,23 @@ var (
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "username", Type: field.TypeString, Unique: true},
-		{Name: "registration_token", Type: field.TypeBytes},
 		{Name: "access_token", Type: field.TypeBytes, Unique: true},
 		{Name: "refresh_token", Type: field.TypeBytes, Unique: true},
+		{Name: "registration_token_registrations", Type: field.TypeInt},
 	}
 	// AccountsTable holds the schema information for the "accounts" table.
 	AccountsTable = &schema.Table{
 		Name:       "accounts",
 		Columns:    AccountsColumns,
 		PrimaryKey: []*schema.Column{AccountsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "accounts_registration_tokens_registrations",
+				Columns:    []*schema.Column{AccountsColumns[6]},
+				RefColumns: []*schema.Column{RegistrationTokensColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
 				Name:    "account_username",
@@ -32,7 +40,7 @@ var (
 			{
 				Name:    "account_access_token",
 				Unique:  true,
-				Columns: []*schema.Column{AccountsColumns[5]},
+				Columns: []*schema.Column{AccountsColumns[4]},
 			},
 		},
 	}
@@ -55,16 +63,21 @@ var (
 				Symbol:     "nodes_accounts_nodes",
 				Columns:    []*schema.Column{NodesColumns[4]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "nodes_servers_nodes",
 				Columns:    []*schema.Column{NodesColumns[5]},
 				RefColumns: []*schema.Column{ServersColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 		Indexes: []*schema.Index{
+			{
+				Name:    "node_name",
+				Unique:  true,
+				Columns: []*schema.Column{NodesColumns[3]},
+			},
 			{
 				Name:    "node_account_nodes",
 				Unique:  false,
@@ -74,6 +87,32 @@ var (
 				Name:    "node_server_nodes",
 				Unique:  false,
 				Columns: []*schema.Column{NodesColumns[5]},
+			},
+		},
+	}
+	// RegistrationTokensColumns holds the columns for the "registration_tokens" table.
+	RegistrationTokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "token", Type: field.TypeBytes, Unique: true},
+	}
+	// RegistrationTokensTable holds the schema information for the "registration_tokens" table.
+	RegistrationTokensTable = &schema.Table{
+		Name:       "registration_tokens",
+		Columns:    RegistrationTokensColumns,
+		PrimaryKey: []*schema.Column{RegistrationTokensColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "registrationtoken_name",
+				Unique:  true,
+				Columns: []*schema.Column{RegistrationTokensColumns[3]},
+			},
+			{
+				Name:    "registrationtoken_token",
+				Unique:  true,
+				Columns: []*schema.Column{RegistrationTokensColumns[4]},
 			},
 		},
 	}
@@ -95,10 +134,15 @@ var (
 				Symbol:     "servers_accounts_servers",
 				Columns:    []*schema.Column{ServersColumns[4]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 		Indexes: []*schema.Index{
+			{
+				Name:    "server_name",
+				Unique:  true,
+				Columns: []*schema.Column{ServersColumns[3]},
+			},
 			{
 				Name:    "server_account_servers",
 				Unique:  false,
@@ -110,11 +154,13 @@ var (
 	Tables = []*schema.Table{
 		AccountsTable,
 		NodesTable,
+		RegistrationTokensTable,
 		ServersTable,
 	}
 )
 
 func init() {
+	AccountsTable.ForeignKeys[0].RefTable = RegistrationTokensTable
 	NodesTable.ForeignKeys[0].RefTable = AccountsTable
 	NodesTable.ForeignKeys[1].RefTable = ServersTable
 	ServersTable.ForeignKeys[0].RefTable = AccountsTable

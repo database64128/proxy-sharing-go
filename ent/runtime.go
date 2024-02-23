@@ -7,6 +7,7 @@ import (
 
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/schema"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
@@ -34,16 +35,12 @@ func init() {
 	accountDescUsername := accountFields[0].Descriptor()
 	// account.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	account.UsernameValidator = accountDescUsername.Validators[0].(func(string) error)
-	// accountDescRegistrationToken is the schema descriptor for registration_token field.
-	accountDescRegistrationToken := accountFields[1].Descriptor()
-	// account.RegistrationTokenValidator is a validator for the "registration_token" field. It is called by the builders before save.
-	account.RegistrationTokenValidator = accountDescRegistrationToken.Validators[0].(func([]byte) error)
 	// accountDescAccessToken is the schema descriptor for access_token field.
-	accountDescAccessToken := accountFields[2].Descriptor()
+	accountDescAccessToken := accountFields[1].Descriptor()
 	// account.AccessTokenValidator is a validator for the "access_token" field. It is called by the builders before save.
 	account.AccessTokenValidator = accountDescAccessToken.Validators[0].(func([]byte) error)
 	// accountDescRefreshToken is the schema descriptor for refresh_token field.
-	accountDescRefreshToken := accountFields[3].Descriptor()
+	accountDescRefreshToken := accountFields[2].Descriptor()
 	// account.RefreshTokenValidator is a validator for the "refresh_token" field. It is called by the builders before save.
 	account.RefreshTokenValidator = accountDescRefreshToken.Validators[0].(func([]byte) error)
 	nodeMixin := schema.Node{}.Mixin()
@@ -65,6 +62,29 @@ func init() {
 	nodeDescName := nodeFields[0].Descriptor()
 	// node.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	node.NameValidator = nodeDescName.Validators[0].(func(string) error)
+	registrationtokenMixin := schema.RegistrationToken{}.Mixin()
+	registrationtokenMixinFields0 := registrationtokenMixin[0].Fields()
+	_ = registrationtokenMixinFields0
+	registrationtokenFields := schema.RegistrationToken{}.Fields()
+	_ = registrationtokenFields
+	// registrationtokenDescCreateTime is the schema descriptor for create_time field.
+	registrationtokenDescCreateTime := registrationtokenMixinFields0[0].Descriptor()
+	// registrationtoken.DefaultCreateTime holds the default value on creation for the create_time field.
+	registrationtoken.DefaultCreateTime = registrationtokenDescCreateTime.Default.(func() time.Time)
+	// registrationtokenDescUpdateTime is the schema descriptor for update_time field.
+	registrationtokenDescUpdateTime := registrationtokenMixinFields0[1].Descriptor()
+	// registrationtoken.DefaultUpdateTime holds the default value on creation for the update_time field.
+	registrationtoken.DefaultUpdateTime = registrationtokenDescUpdateTime.Default.(func() time.Time)
+	// registrationtoken.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	registrationtoken.UpdateDefaultUpdateTime = registrationtokenDescUpdateTime.UpdateDefault.(func() time.Time)
+	// registrationtokenDescName is the schema descriptor for name field.
+	registrationtokenDescName := registrationtokenFields[0].Descriptor()
+	// registrationtoken.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	registrationtoken.NameValidator = registrationtokenDescName.Validators[0].(func(string) error)
+	// registrationtokenDescToken is the schema descriptor for token field.
+	registrationtokenDescToken := registrationtokenFields[1].Descriptor()
+	// registrationtoken.TokenValidator is a validator for the "token" field. It is called by the builders before save.
+	registrationtoken.TokenValidator = registrationtokenDescToken.Validators[0].(func([]byte) error)
 	serverMixin := schema.Server{}.Mixin()
 	serverMixinFields0 := serverMixin[0].Fields()
 	_ = serverMixinFields0

@@ -14,18 +14,21 @@ import (
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/node"
 	"github.com/database64128/proxy-sharing-go/ent/predicate"
+	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
 	"github.com/database64128/proxy-sharing-go/ent/server"
 )
 
 // AccountQuery is the builder for querying Account entities.
 type AccountQuery struct {
 	config
-	ctx         *QueryContext
-	order       []account.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Account
-	withServers *ServerQuery
-	withNodes   *NodeQuery
+	ctx                   *QueryContext
+	order                 []account.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.Account
+	withServers           *ServerQuery
+	withNodes             *NodeQuery
+	withRegistrationToken *RegistrationTokenQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -99,6 +102,28 @@ func (aq *AccountQuery) QueryNodes() *NodeQuery {
 			sqlgraph.From(account.Table, account.FieldID, selector),
 			sqlgraph.To(node.Table, node.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, account.NodesTable, account.NodesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRegistrationToken chains the current query on the "registration_token" edge.
+func (aq *AccountQuery) QueryRegistrationToken() *RegistrationTokenQuery {
+	query := (&RegistrationTokenClient{config: aq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, selector),
+			sqlgraph.To(registrationtoken.Table, registrationtoken.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, account.RegistrationTokenTable, account.RegistrationTokenColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -293,13 +318,14 @@ func (aq *AccountQuery) Clone() *AccountQuery {
 		return nil
 	}
 	return &AccountQuery{
-		config:      aq.config,
-		ctx:         aq.ctx.Clone(),
-		order:       append([]account.OrderOption{}, aq.order...),
-		inters:      append([]Interceptor{}, aq.inters...),
-		predicates:  append([]predicate.Account{}, aq.predicates...),
-		withServers: aq.withServers.Clone(),
-		withNodes:   aq.withNodes.Clone(),
+		config:                aq.config,
+		ctx:                   aq.ctx.Clone(),
+		order:                 append([]account.OrderOption{}, aq.order...),
+		inters:                append([]Interceptor{}, aq.inters...),
+		predicates:            append([]predicate.Account{}, aq.predicates...),
+		withServers:           aq.withServers.Clone(),
+		withNodes:             aq.withNodes.Clone(),
+		withRegistrationToken: aq.withRegistrationToken.Clone(),
 		// clone intermediate query.
 		sql:  aq.sql.Clone(),
 		path: aq.path,
@@ -325,6 +351,17 @@ func (aq *AccountQuery) WithNodes(opts ...func(*NodeQuery)) *AccountQuery {
 		opt(query)
 	}
 	aq.withNodes = query
+	return aq
+}
+
+// WithRegistrationToken tells the query-builder to eager-load the nodes that are connected to
+// the "registration_token" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AccountQuery) WithRegistrationToken(opts ...func(*RegistrationTokenQuery)) *AccountQuery {
+	query := (&RegistrationTokenClient{config: aq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withRegistrationToken = query
 	return aq
 }
 
@@ -405,12 +442,20 @@ func (aq *AccountQuery) prepareQuery(ctx context.Context) error {
 func (aq *AccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Account, error) {
 	var (
 		nodes       = []*Account{}
+		withFKs     = aq.withFKs
 		_spec       = aq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			aq.withServers != nil,
 			aq.withNodes != nil,
+			aq.withRegistrationToken != nil,
 		}
 	)
+	if aq.withRegistrationToken != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, account.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Account).scanValues(nil, columns)
 	}
@@ -440,6 +485,12 @@ func (aq *AccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Acco
 		if err := aq.loadNodes(ctx, query, nodes,
 			func(n *Account) { n.Edges.Nodes = []*Node{} },
 			func(n *Account, e *Node) { n.Edges.Nodes = append(n.Edges.Nodes, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := aq.withRegistrationToken; query != nil {
+		if err := aq.loadRegistrationToken(ctx, query, nodes, nil,
+			func(n *Account, e *RegistrationToken) { n.Edges.RegistrationToken = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -505,6 +556,38 @@ func (aq *AccountQuery) loadNodes(ctx context.Context, query *NodeQuery, nodes [
 			return fmt.Errorf(`unexpected referenced foreign-key "account_nodes" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (aq *AccountQuery) loadRegistrationToken(ctx context.Context, query *RegistrationTokenQuery, nodes []*Account, init func(*Account), assign func(*Account, *RegistrationToken)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Account)
+	for i := range nodes {
+		if nodes[i].registration_token_registrations == nil {
+			continue
+		}
+		fk := *nodes[i].registration_token_registrations
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(registrationtoken.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "registration_token_registrations" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
