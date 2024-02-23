@@ -1,0 +1,24 @@
+{
+    "api": {
+        "debugPprof": false,
+        "enableTrustedProxyCheck": false,
+        "trustedProxies": [],
+        "proxyHeader": "X-Forwarded-For",
+        "listenAddress": ":18080",
+        "certFile": "",
+        "keyFile": "",
+        "clientCertFile": "",
+        "staticPath": "",
+        "fiberConfigPath": ""
+    },
+    "database": {
+        "driver": "sqlite3",
+        "dsn": "file:data.db?_pragma=foreign_keys(1)&_pragma=journal_mode('WAL')",
+        "maxOpenConns": 1,
+        "maxIdleConns": 1,
+        "connMaxLifetime": "0s",
+        "connMaxIdleTime": "0s",
+        "debug": false,
+        "noAutoMigrate": false
+    }
+}
