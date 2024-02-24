@@ -21,7 +21,7 @@ To authenticate with the Admin API, configure a separate set of access tokens in
 In requests to the Admin API endpoints, include the access token in the `Authorization` header.
 
 ```http
-GET /api/admin/v1/users HTTP/1.1
+GET /api/admin/v1/accounts HTTP/1.1
 Host: localhost:18080
 Authorization: Bearer jTGA1dfSmqtyNsLIrM9zkPIdjvw76I1z7LqJAAg13TU=
 ```
@@ -171,8 +171,10 @@ PATCH /api/admin/v1/registration-tokens/1
 #### Request
 
 ```
-DELETE /api/admin/v1/registration-tokens/1
+DELETE /api/admin/v1/registration-tokens/1{?purgeRegistrations=true}
 ```
+
+- `purgeRegistrations`: Optional. If `true`, delete all accounts registered with the token.
 
 #### Response: `204 No Content`
 
@@ -192,4 +194,6 @@ DELETE /api/admin/v1/registration-tokens/1
 }
 ```
 
-## 3. Users
+## 3. Accounts
+
+Manage accounts on the platform.
