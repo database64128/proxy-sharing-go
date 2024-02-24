@@ -28,7 +28,6 @@ type AccountQuery struct {
 	withServers           *ServerQuery
 	withNodes             *NodeQuery
 	withRegistrationToken *RegistrationTokenQuery
-	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -442,7 +441,6 @@ func (aq *AccountQuery) prepareQuery(ctx context.Context) error {
 func (aq *AccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Account, error) {
 	var (
 		nodes       = []*Account{}
-		withFKs     = aq.withFKs
 		_spec       = aq.querySpec()
 		loadedTypes = [3]bool{
 			aq.withServers != nil,
@@ -450,12 +448,6 @@ func (aq *AccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Acco
 			aq.withRegistrationToken != nil,
 		}
 	)
-	if aq.withRegistrationToken != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, account.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Account).scanValues(nil, columns)
 	}
@@ -563,10 +555,7 @@ func (aq *AccountQuery) loadRegistrationToken(ctx context.Context, query *Regist
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Account)
 	for i := range nodes {
-		if nodes[i].registration_token_registrations == nil {
-			continue
-		}
-		fk := *nodes[i].registration_token_registrations
+		fk := nodes[i].RegistrationTokenID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -583,7 +572,7 @@ func (aq *AccountQuery) loadRegistrationToken(ctx context.Context, query *Regist
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "registration_token_registrations" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "registration_token_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -616,6 +605,9 @@ func (aq *AccountQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != account.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if aq.withRegistrationToken != nil {
+			_spec.Node.AddColumnOnce(account.FieldRegistrationTokenID)
 		}
 	}
 	if ps := aq.predicates; len(ps) > 0 {

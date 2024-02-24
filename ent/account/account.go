@@ -24,6 +24,8 @@ const (
 	FieldAccessToken = "access_token"
 	// FieldRefreshToken holds the string denoting the refresh_token field in the database.
 	FieldRefreshToken = "refresh_token"
+	// FieldRegistrationTokenID holds the string denoting the registration_token_id field in the database.
+	FieldRegistrationTokenID = "registration_token_id"
 	// EdgeServers holds the string denoting the servers edge name in mutations.
 	EdgeServers = "servers"
 	// EdgeNodes holds the string denoting the nodes edge name in mutations.
@@ -52,7 +54,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "registrationtoken" package.
 	RegistrationTokenInverseTable = "registration_tokens"
 	// RegistrationTokenColumn is the table column denoting the registration_token relation/edge.
-	RegistrationTokenColumn = "registration_token_registrations"
+	RegistrationTokenColumn = "registration_token_id"
 )
 
 // Columns holds all SQL columns for account fields.
@@ -63,23 +65,13 @@ var Columns = []string{
 	FieldUsername,
 	FieldAccessToken,
 	FieldRefreshToken,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "accounts"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"registration_token_registrations",
+	FieldRegistrationTokenID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -122,6 +114,11 @@ func ByUpdateTime(opts ...sql.OrderTermOption) OrderOption {
 // ByUsername orders the results by the username field.
 func ByUsername(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUsername, opts...).ToFunc()
+}
+
+// ByRegistrationTokenID orders the results by the registration_token_id field.
+func ByRegistrationTokenID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRegistrationTokenID, opts...).ToFunc()
 }
 
 // ByServersCount orders the results by servers count.

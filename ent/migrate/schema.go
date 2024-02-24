@@ -16,7 +16,7 @@ var (
 		{Name: "username", Type: field.TypeString, Unique: true},
 		{Name: "access_token", Type: field.TypeBytes, Unique: true},
 		{Name: "refresh_token", Type: field.TypeBytes, Unique: true},
-		{Name: "registration_token_registrations", Type: field.TypeInt},
+		{Name: "registration_token_id", Type: field.TypeInt, Nullable: true},
 	}
 	// AccountsTable holds the schema information for the "accounts" table.
 	AccountsTable = &schema.Table{

@@ -4,9 +4,12 @@ import (
 	"time"
 
 	"github.com/database64128/proxy-sharing-go/ent"
+	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/httphelper"
+	"github.com/database64128/proxy-sharing-go/tokenhelper"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
+	"go.uber.org/zap"
 )
 
 // Config stores the configuration for the admin API.
@@ -17,7 +20,7 @@ type Config struct {
 }
 
 // RegisterRoutes registers the admin API routes.
-func (c Config) RegisterRoutes(router fiber.Router, client *ent.Client) {
+func (c Config) RegisterRoutes(router fiber.Router, client *ent.Client, logger *zap.Logger) {
 	router.Use(c.newAuthMiddleware())
 
 	rtg := router.Group("/registration-tokens")
@@ -25,7 +28,7 @@ func (c Config) RegisterRoutes(router fiber.Router, client *ent.Client) {
 	rtg.Get("/:id", newGetRegistrationTokenHandler(client))
 	rtg.Post("/", newCreateRegistrationTokenHandler(client))
 	rtg.Patch("/:id", newRenameRegistrationTokenHandler(client))
-	rtg.Delete("/:id", newDeleteRegistrationTokenHandler(client))
+	rtg.Delete("/:id", newDeleteRegistrationTokenHandler(client, logger))
 }
 
 func (c Config) newAuthMiddleware() fiber.Handler {
@@ -108,8 +111,14 @@ func newCreateRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
 		}
 
+		b, err := tokenhelper.NewTokenBytes()
+		if err != nil {
+			return err
+		}
+
 		token, err := client.RegistrationToken.Create().
 			SetName(req.Name).
+			SetToken(b).
 			Save(c.Context())
 		if err != nil {
 			if ent.IsValidationError(err) || ent.IsConstraintError(err) {
@@ -118,7 +127,7 @@ func newCreateRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			return err
 		}
 
-		return c.JSON(registrationTokenFromEnt(token))
+		return c.Status(fiber.StatusCreated).JSON(registrationTokenFromEnt(token))
 	}
 }
 
@@ -151,11 +160,20 @@ func newRenameRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 	}
 }
 
-func newDeleteRegistrationTokenHandler(client *ent.Client) fiber.Handler {
+func newDeleteRegistrationTokenHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := c.ParamsInt("id")
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+		}
+
+		if c.QueryBool("purgeRegistrations") {
+			// The nuclear option: delete all accounts registered with this token.
+			n, err := client.Account.Delete().Where(account.RegistrationTokenID(id)).Exec(c.Context())
+			if err != nil {
+				return err
+			}
+			logger.Info("Deleted accounts registered with token", zap.Int("tokenID", id), zap.Int("count", n))
 		}
 
 		err = client.RegistrationToken.DeleteOneID(id).Exec(c.Context())

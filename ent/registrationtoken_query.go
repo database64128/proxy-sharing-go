@@ -412,7 +412,9 @@ func (rtq *RegistrationTokenQuery) loadRegistrations(ctx context.Context, query 
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(account.FieldRegistrationTokenID)
+	}
 	query.Where(predicate.Account(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(registrationtoken.RegistrationsColumn), fks...))
 	}))
@@ -421,13 +423,10 @@ func (rtq *RegistrationTokenQuery) loadRegistrations(ctx context.Context, query 
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.registration_token_registrations
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "registration_token_registrations" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.RegistrationTokenID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "registration_token_registrations" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "registration_token_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

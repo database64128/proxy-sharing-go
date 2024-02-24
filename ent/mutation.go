@@ -336,6 +336,55 @@ func (m *AccountMutation) ResetRefreshToken() {
 	m.refresh_token = nil
 }
 
+// SetRegistrationTokenID sets the "registration_token_id" field.
+func (m *AccountMutation) SetRegistrationTokenID(i int) {
+	m.registration_token = &i
+}
+
+// RegistrationTokenID returns the value of the "registration_token_id" field in the mutation.
+func (m *AccountMutation) RegistrationTokenID() (r int, exists bool) {
+	v := m.registration_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegistrationTokenID returns the old "registration_token_id" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldRegistrationTokenID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegistrationTokenID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegistrationTokenID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegistrationTokenID: %w", err)
+	}
+	return oldValue.RegistrationTokenID, nil
+}
+
+// ClearRegistrationTokenID clears the value of the "registration_token_id" field.
+func (m *AccountMutation) ClearRegistrationTokenID() {
+	m.registration_token = nil
+	m.clearedFields[account.FieldRegistrationTokenID] = struct{}{}
+}
+
+// RegistrationTokenIDCleared returns if the "registration_token_id" field was cleared in this mutation.
+func (m *AccountMutation) RegistrationTokenIDCleared() bool {
+	_, ok := m.clearedFields[account.FieldRegistrationTokenID]
+	return ok
+}
+
+// ResetRegistrationTokenID resets all changes to the "registration_token_id" field.
+func (m *AccountMutation) ResetRegistrationTokenID() {
+	m.registration_token = nil
+	delete(m.clearedFields, account.FieldRegistrationTokenID)
+}
+
 // AddServerIDs adds the "servers" edge to the Server entity by ids.
 func (m *AccountMutation) AddServerIDs(ids ...int) {
 	if m.servers == nil {
@@ -444,27 +493,15 @@ func (m *AccountMutation) ResetNodes() {
 	m.removednodes = nil
 }
 
-// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by id.
-func (m *AccountMutation) SetRegistrationTokenID(id int) {
-	m.registration_token = &id
-}
-
 // ClearRegistrationToken clears the "registration_token" edge to the RegistrationToken entity.
 func (m *AccountMutation) ClearRegistrationToken() {
 	m.clearedregistration_token = true
+	m.clearedFields[account.FieldRegistrationTokenID] = struct{}{}
 }
 
 // RegistrationTokenCleared reports if the "registration_token" edge to the RegistrationToken entity was cleared.
 func (m *AccountMutation) RegistrationTokenCleared() bool {
-	return m.clearedregistration_token
-}
-
-// RegistrationTokenID returns the "registration_token" edge ID in the mutation.
-func (m *AccountMutation) RegistrationTokenID() (id int, exists bool) {
-	if m.registration_token != nil {
-		return *m.registration_token, true
-	}
-	return
+	return m.RegistrationTokenIDCleared() || m.clearedregistration_token
 }
 
 // RegistrationTokenIDs returns the "registration_token" edge IDs in the mutation.
@@ -517,7 +554,7 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.create_time != nil {
 		fields = append(fields, account.FieldCreateTime)
 	}
@@ -532,6 +569,9 @@ func (m *AccountMutation) Fields() []string {
 	}
 	if m.refresh_token != nil {
 		fields = append(fields, account.FieldRefreshToken)
+	}
+	if m.registration_token != nil {
+		fields = append(fields, account.FieldRegistrationTokenID)
 	}
 	return fields
 }
@@ -551,6 +591,8 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 		return m.AccessToken()
 	case account.FieldRefreshToken:
 		return m.RefreshToken()
+	case account.FieldRegistrationTokenID:
+		return m.RegistrationTokenID()
 	}
 	return nil, false
 }
@@ -570,6 +612,8 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldAccessToken(ctx)
 	case account.FieldRefreshToken:
 		return m.OldRefreshToken(ctx)
+	case account.FieldRegistrationTokenID:
+		return m.OldRegistrationTokenID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Account field %s", name)
 }
@@ -614,6 +658,13 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRefreshToken(v)
 		return nil
+	case account.FieldRegistrationTokenID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegistrationTokenID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Account field %s", name)
 }
@@ -621,13 +672,16 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *AccountMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *AccountMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
 	return nil, false
 }
 
@@ -643,7 +697,11 @@ func (m *AccountMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *AccountMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(account.FieldRegistrationTokenID) {
+		fields = append(fields, account.FieldRegistrationTokenID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -656,6 +714,11 @@ func (m *AccountMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AccountMutation) ClearField(name string) error {
+	switch name {
+	case account.FieldRegistrationTokenID:
+		m.ClearRegistrationTokenID()
+		return nil
+	}
 	return fmt.Errorf("unknown Account nullable field %s", name)
 }
 
@@ -677,6 +740,9 @@ func (m *AccountMutation) ResetField(name string) error {
 		return nil
 	case account.FieldRefreshToken:
 		m.ResetRefreshToken()
+		return nil
+	case account.FieldRegistrationTokenID:
+		m.ResetRegistrationTokenID()
 		return nil
 	}
 	return fmt.Errorf("unknown Account field %s", name)

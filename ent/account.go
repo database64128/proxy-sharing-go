@@ -28,11 +28,12 @@ type Account struct {
 	AccessToken []byte `json:"access_token,omitempty"`
 	// RefreshToken is the token used to refresh the account.
 	RefreshToken []byte `json:"refresh_token,omitempty"`
+	// RegistrationTokenID is the ID of the registration token.
+	RegistrationTokenID int `json:"registration_token_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AccountQuery when eager-loading is set.
-	Edges                            AccountEdges `json:"edges"`
-	registration_token_registrations *int
-	selectValues                     sql.SelectValues
+	Edges        AccountEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // AccountEdges holds the relations/edges for other nodes in the graph.
@@ -86,14 +87,12 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case account.FieldAccessToken, account.FieldRefreshToken:
 			values[i] = new([]byte)
-		case account.FieldID:
+		case account.FieldID, account.FieldRegistrationTokenID:
 			values[i] = new(sql.NullInt64)
 		case account.FieldUsername:
 			values[i] = new(sql.NullString)
 		case account.FieldCreateTime, account.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
-		case account.ForeignKeys[0]: // registration_token_registrations
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -145,12 +144,11 @@ func (a *Account) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				a.RefreshToken = *value
 			}
-		case account.ForeignKeys[0]:
+		case account.FieldRegistrationTokenID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field registration_token_registrations", value)
+				return fmt.Errorf("unexpected type %T for field registration_token_id", values[i])
 			} else if value.Valid {
-				a.registration_token_registrations = new(int)
-				*a.registration_token_registrations = int(value.Int64)
+				a.RegistrationTokenID = int(value.Int64)
 			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
@@ -217,6 +215,9 @@ func (a *Account) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("refresh_token=")
 	builder.WriteString(fmt.Sprintf("%v", a.RefreshToken))
+	builder.WriteString(", ")
+	builder.WriteString("registration_token_id=")
+	builder.WriteString(fmt.Sprintf("%v", a.RegistrationTokenID))
 	builder.WriteByte(')')
 	return builder.String()
 }

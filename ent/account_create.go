@@ -69,6 +69,20 @@ func (ac *AccountCreate) SetRefreshToken(b []byte) *AccountCreate {
 	return ac
 }
 
+// SetRegistrationTokenID sets the "registration_token_id" field.
+func (ac *AccountCreate) SetRegistrationTokenID(i int) *AccountCreate {
+	ac.mutation.SetRegistrationTokenID(i)
+	return ac
+}
+
+// SetNillableRegistrationTokenID sets the "registration_token_id" field if the given value is not nil.
+func (ac *AccountCreate) SetNillableRegistrationTokenID(i *int) *AccountCreate {
+	if i != nil {
+		ac.SetRegistrationTokenID(*i)
+	}
+	return ac
+}
+
 // AddServerIDs adds the "servers" edge to the Server entity by IDs.
 func (ac *AccountCreate) AddServerIDs(ids ...int) *AccountCreate {
 	ac.mutation.AddServerIDs(ids...)
@@ -97,12 +111,6 @@ func (ac *AccountCreate) AddNodes(n ...*Node) *AccountCreate {
 		ids[i] = n[i].ID
 	}
 	return ac.AddNodeIDs(ids...)
-}
-
-// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by ID.
-func (ac *AccountCreate) SetRegistrationTokenID(id int) *AccountCreate {
-	ac.mutation.SetRegistrationTokenID(id)
-	return ac
 }
 
 // SetRegistrationToken sets the "registration_token" edge to the RegistrationToken entity.
@@ -186,9 +194,6 @@ func (ac *AccountCreate) check() error {
 		if err := account.RefreshTokenValidator(v); err != nil {
 			return &ValidationError{Name: "refresh_token", err: fmt.Errorf(`ent: validator failed for field "Account.refresh_token": %w`, err)}
 		}
-	}
-	if _, ok := ac.mutation.RegistrationTokenID(); !ok {
-		return &ValidationError{Name: "registration_token", err: errors.New(`ent: missing required edge "Account.registration_token"`)}
 	}
 	return nil
 }
@@ -282,7 +287,7 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.registration_token_registrations = &nodes[0]
+		_node.RegistrationTokenID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

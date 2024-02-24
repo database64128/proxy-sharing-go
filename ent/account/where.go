@@ -80,6 +80,11 @@ func RefreshToken(v []byte) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldRefreshToken, v))
 }
 
+// RegistrationTokenID applies equality check predicate on the "registration_token_id" field. It's identical to RegistrationTokenIDEQ.
+func RegistrationTokenID(v int) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldRegistrationTokenID, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldCreateTime, v))
@@ -303,6 +308,36 @@ func RefreshTokenLT(v []byte) predicate.Account {
 // RefreshTokenLTE applies the LTE predicate on the "refresh_token" field.
 func RefreshTokenLTE(v []byte) predicate.Account {
 	return predicate.Account(sql.FieldLTE(FieldRefreshToken, v))
+}
+
+// RegistrationTokenIDEQ applies the EQ predicate on the "registration_token_id" field.
+func RegistrationTokenIDEQ(v int) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldRegistrationTokenID, v))
+}
+
+// RegistrationTokenIDNEQ applies the NEQ predicate on the "registration_token_id" field.
+func RegistrationTokenIDNEQ(v int) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldRegistrationTokenID, v))
+}
+
+// RegistrationTokenIDIn applies the In predicate on the "registration_token_id" field.
+func RegistrationTokenIDIn(vs ...int) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldRegistrationTokenID, vs...))
+}
+
+// RegistrationTokenIDNotIn applies the NotIn predicate on the "registration_token_id" field.
+func RegistrationTokenIDNotIn(vs ...int) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldRegistrationTokenID, vs...))
+}
+
+// RegistrationTokenIDIsNil applies the IsNil predicate on the "registration_token_id" field.
+func RegistrationTokenIDIsNil() predicate.Account {
+	return predicate.Account(sql.FieldIsNull(FieldRegistrationTokenID))
+}
+
+// RegistrationTokenIDNotNil applies the NotNil predicate on the "registration_token_id" field.
+func RegistrationTokenIDNotNil() predicate.Account {
+	return predicate.Account(sql.FieldNotNull(FieldRegistrationTokenID))
 }
 
 // HasServers applies the HasEdge predicate on the "servers" edge.

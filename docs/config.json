@@ -9,7 +9,13 @@
         "keyFile": "",
         "clientCertFile": "",
         "staticPath": "",
-        "fiberConfigPath": ""
+        "secretPath": "",
+        "fiberConfigPath": "",
+        "admin": {
+            "accessTokens": [
+                "jTGA1dfSmqtyNsLIrM9zkPIdjvw76I1z7LqJAAg13TU="
+            ]
+        }
     },
     "database": {
         "driver": "sqlite3",

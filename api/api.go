@@ -103,7 +103,7 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 	api := router.Group("/api")
 
 	// /api/admin/v1
-	c.Admin.RegisterRoutes(api.Group("/admin/v1"), client)
+	c.Admin.RegisterRoutes(api.Group("/admin/v1"), client, logger)
 
 	if c.StaticPath != "" {
 		router.Static("/", c.StaticPath, fiber.Static{

@@ -36,6 +36,9 @@ func (Account) Fields() []ent.Field {
 			Unique().
 			NotEmpty().
 			Comment("RefreshToken is the token used to refresh the account."),
+		field.Int("registration_token_id").
+			Optional().
+			Comment("RegistrationTokenID is the ID of the registration token."),
 	}
 }
 
@@ -47,9 +50,9 @@ func (Account) Edges() []ent.Edge {
 		edge.To("nodes", Node.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.From("registration_token", RegistrationToken.Type).
+			Field("registration_token_id").
 			Ref("registrations").
-			Unique().
-			Required(),
+			Unique(),
 	}
 }
 

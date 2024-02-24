@@ -63,6 +63,26 @@ func (au *AccountUpdate) SetRefreshToken(b []byte) *AccountUpdate {
 	return au
 }
 
+// SetRegistrationTokenID sets the "registration_token_id" field.
+func (au *AccountUpdate) SetRegistrationTokenID(i int) *AccountUpdate {
+	au.mutation.SetRegistrationTokenID(i)
+	return au
+}
+
+// SetNillableRegistrationTokenID sets the "registration_token_id" field if the given value is not nil.
+func (au *AccountUpdate) SetNillableRegistrationTokenID(i *int) *AccountUpdate {
+	if i != nil {
+		au.SetRegistrationTokenID(*i)
+	}
+	return au
+}
+
+// ClearRegistrationTokenID clears the value of the "registration_token_id" field.
+func (au *AccountUpdate) ClearRegistrationTokenID() *AccountUpdate {
+	au.mutation.ClearRegistrationTokenID()
+	return au
+}
+
 // AddServerIDs adds the "servers" edge to the Server entity by IDs.
 func (au *AccountUpdate) AddServerIDs(ids ...int) *AccountUpdate {
 	au.mutation.AddServerIDs(ids...)
@@ -91,12 +111,6 @@ func (au *AccountUpdate) AddNodes(n ...*Node) *AccountUpdate {
 		ids[i] = n[i].ID
 	}
 	return au.AddNodeIDs(ids...)
-}
-
-// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by ID.
-func (au *AccountUpdate) SetRegistrationTokenID(id int) *AccountUpdate {
-	au.mutation.SetRegistrationTokenID(id)
-	return au
 }
 
 // SetRegistrationToken sets the "registration_token" edge to the RegistrationToken entity.
@@ -209,9 +223,6 @@ func (au *AccountUpdate) check() error {
 		if err := account.RefreshTokenValidator(v); err != nil {
 			return &ValidationError{Name: "refresh_token", err: fmt.Errorf(`ent: validator failed for field "Account.refresh_token": %w`, err)}
 		}
-	}
-	if _, ok := au.mutation.RegistrationTokenID(); au.mutation.RegistrationTokenCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Account.registration_token"`)
 	}
 	return nil
 }
@@ -411,6 +422,26 @@ func (auo *AccountUpdateOne) SetRefreshToken(b []byte) *AccountUpdateOne {
 	return auo
 }
 
+// SetRegistrationTokenID sets the "registration_token_id" field.
+func (auo *AccountUpdateOne) SetRegistrationTokenID(i int) *AccountUpdateOne {
+	auo.mutation.SetRegistrationTokenID(i)
+	return auo
+}
+
+// SetNillableRegistrationTokenID sets the "registration_token_id" field if the given value is not nil.
+func (auo *AccountUpdateOne) SetNillableRegistrationTokenID(i *int) *AccountUpdateOne {
+	if i != nil {
+		auo.SetRegistrationTokenID(*i)
+	}
+	return auo
+}
+
+// ClearRegistrationTokenID clears the value of the "registration_token_id" field.
+func (auo *AccountUpdateOne) ClearRegistrationTokenID() *AccountUpdateOne {
+	auo.mutation.ClearRegistrationTokenID()
+	return auo
+}
+
 // AddServerIDs adds the "servers" edge to the Server entity by IDs.
 func (auo *AccountUpdateOne) AddServerIDs(ids ...int) *AccountUpdateOne {
 	auo.mutation.AddServerIDs(ids...)
@@ -439,12 +470,6 @@ func (auo *AccountUpdateOne) AddNodes(n ...*Node) *AccountUpdateOne {
 		ids[i] = n[i].ID
 	}
 	return auo.AddNodeIDs(ids...)
-}
-
-// SetRegistrationTokenID sets the "registration_token" edge to the RegistrationToken entity by ID.
-func (auo *AccountUpdateOne) SetRegistrationTokenID(id int) *AccountUpdateOne {
-	auo.mutation.SetRegistrationTokenID(id)
-	return auo
 }
 
 // SetRegistrationToken sets the "registration_token" edge to the RegistrationToken entity.
@@ -570,9 +595,6 @@ func (auo *AccountUpdateOne) check() error {
 		if err := account.RefreshTokenValidator(v); err != nil {
 			return &ValidationError{Name: "refresh_token", err: fmt.Errorf(`ent: validator failed for field "Account.refresh_token": %w`, err)}
 		}
-	}
-	if _, ok := auo.mutation.RegistrationTokenID(); auo.mutation.RegistrationTokenCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Account.registration_token"`)
 	}
 	return nil
 }

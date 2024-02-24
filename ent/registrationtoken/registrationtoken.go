@@ -32,7 +32,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "account" package.
 	RegistrationsInverseTable = "accounts"
 	// RegistrationsColumn is the table column denoting the registrations relation/edge.
-	RegistrationsColumn = "registration_token_registrations"
+	RegistrationsColumn = "registration_token_id"
 )
 
 // Columns holds all SQL columns for registrationtoken fields.
