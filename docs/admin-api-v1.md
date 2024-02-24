@@ -26,6 +26,14 @@ Host: localhost:18080
 Authorization: Bearer jTGA1dfSmqtyNsLIrM9zkPIdjvw76I1z7LqJAAg13TU=
 ```
 
+The server will respond with `401 Unauthorized` if the access token is missing or invalid.
+
+```json
+{
+    "error": "invalid access token"
+}
+```
+
 ## 2. Registration Tokens
 
 Create registration tokens to allow users to register on the platform.
@@ -59,7 +67,7 @@ GET /api/admin/v1/registration-tokens
 #### Request
 
 ```
-GET /api/admin/v1/registration-tokens/1
+GET /api/admin/v1/registration-tokens/:id
 ```
 
 #### Response: `200 OK`
@@ -124,12 +132,20 @@ POST /api/admin/v1/registration-tokens
 }
 ```
 
+#### Response: `409 Conflict`
+
+```json
+{
+    "error": "a token with the same name already exists"
+}
+```
+
 ### 2.4. Update a Registration Token
 
 #### Request
 
 ```
-PATCH /api/admin/v1/registration-tokens/1
+PATCH /api/admin/v1/registration-tokens/:id
 ```
 
 ```json
@@ -166,17 +182,27 @@ PATCH /api/admin/v1/registration-tokens/1
 }
 ```
 
+#### Response: `409 Conflict`
+
+```json
+{
+    "error": "a token with the same name already exists"
+}
+```
+
 ### 2.5. Delete a Registration Token
 
 #### Request
 
 ```
-DELETE /api/admin/v1/registration-tokens/1{?purgeRegistrations=true}
+DELETE /api/admin/v1/registration-tokens/:id{?purgeRegistrations=true}
 ```
 
 - `purgeRegistrations`: Optional. If `true`, delete all accounts registered with the token.
 
 #### Response: `204 No Content`
+
+The registration token is successfully deleted.
 
 #### Response: `400 Bad Request`
 

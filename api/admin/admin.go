@@ -121,8 +121,11 @@ func newCreateRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			SetToken(b).
 			Save(c.Context())
 		if err != nil {
-			if ent.IsValidationError(err) || ent.IsConstraintError(err) {
+			if ent.IsValidationError(err) {
 				return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			}
+			if ent.IsConstraintError(err) {
+				return c.Status(fiber.StatusConflict).JSON(httphelper.StandardError{Message: err.Error()})
 			}
 			return err
 		}
@@ -150,8 +153,11 @@ func newRenameRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			if ent.IsNotFound(err) {
 				return c.Status(fiber.StatusNotFound).JSON(httphelper.StandardError{Message: "token not found"})
 			}
-			if ent.IsValidationError(err) || ent.IsConstraintError(err) {
+			if ent.IsValidationError(err) {
 				return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			}
+			if ent.IsConstraintError(err) {
+				return c.Status(fiber.StatusConflict).JSON(httphelper.StandardError{Message: err.Error()})
 			}
 			return err
 		}
