@@ -10,3 +10,10 @@ func NewTokenBytes() ([]byte, error) {
 	_, err := rand.Read(b)
 	return b, err
 }
+
+// NewAccessTokenAndRefreshTokenBytes returns a new access token and refresh token as byte slices.
+func NewAccessTokenAndRefreshTokenBytes() (accessToken, refreshToken []byte, err error) {
+	b := make([]byte, 64)
+	_, err = rand.Read(b)
+	return b[:32], b[32:], err
+}

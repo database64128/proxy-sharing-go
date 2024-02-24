@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/database64128/proxy-sharing-go/api/admin"
+	"github.com/database64128/proxy-sharing-go/api/ops"
 	"github.com/database64128/proxy-sharing-go/ent"
 	"github.com/database64128/proxy-sharing-go/jsonhelper"
 	"github.com/gofiber/contrib/fiberzap/v2"
@@ -60,6 +61,9 @@ type Config struct {
 
 	// Admin is the configuration for the admin API.
 	Admin admin.Config `json:"admin"`
+
+	// OpenProxySharing is the configuration for the Open Proxy Sharing API.
+	OpenProxySharing ops.Config `json:"openProxySharing"`
 }
 
 // Server returns a new API server from the config.
@@ -104,6 +108,9 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 
 	// /api/admin/v1
 	c.Admin.RegisterRoutes(api.Group("/admin/v1"), client, logger)
+
+	// /api/ops/v1
+	c.OpenProxySharing.RegisterRoutes(api.Group("/ops/v1"), client, logger)
 
 	if c.StaticPath != "" {
 		router.Static("/", c.StaticPath, fiber.Static{
