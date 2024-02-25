@@ -173,7 +173,7 @@ func newDeleteRegistrationTokenHandler(client *ent.Client, logger *zap.Logger) f
 			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
 		}
 
-		if c.QueryBool("purgeRegistrations") {
+		if c.QueryBool("purge") {
 			// The nuclear option: delete all accounts registered with this token.
 			n, err := client.Account.Delete().Where(account.RegistrationTokenID(id)).Exec(c.Context())
 			if err != nil {

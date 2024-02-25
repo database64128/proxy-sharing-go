@@ -23,13 +23,25 @@ func (c Config) RegisterRoutes(router fiber.Router, client *ent.Client, logger *
 
 	router.Use(newAuthMiddleware(client))
 
-	router.Get("/account", newGetAccountHandler())
+	router.Get("/account", newGetCurrentAccountHandler())
+	router.Get("/accounts", newListAccountsHandler(client))
+	router.Get("/accounts/:id", newGetAccountHandler(client))
 }
 
 type registerRefreshResponse struct {
+	ID           int    `json:"id"`
 	Username     string `json:"username"`
 	AccessToken  []byte `json:"access_token"`
 	RefreshToken []byte `json:"refresh_token"`
+}
+
+func registerRefreshResponseFromEntAccount(account *ent.Account) registerRefreshResponse {
+	return registerRefreshResponse{
+		ID:           account.ID,
+		Username:     account.Username,
+		AccessToken:  account.AccessToken,
+		RefreshToken: account.RefreshToken,
+	}
 }
 
 func newRegisterHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
@@ -57,7 +69,7 @@ func newRegisterHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 			return err
 		}
 
-		_, err = client.Account.Create().
+		account, err := client.Account.Create().
 			SetUsername(req.Username).
 			SetAccessToken(accessToken).
 			SetRefreshToken(refreshToken).
@@ -78,11 +90,7 @@ func newRegisterHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 			zap.String("registrationToken", registrationToken.Name),
 		)
 
-		return c.JSON(registerRefreshResponse{
-			Username:     req.Username,
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		})
+		return c.JSON(registerRefreshResponseFromEntAccount(account))
 	}
 }
 
@@ -119,11 +127,7 @@ func newRefreshHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 
 		logger.Info("Refreshed account access token", zap.String("username", account.Username))
 
-		return c.JSON(registerRefreshResponse{
-			Username:     account.Username,
-			AccessToken:  accessToken,
-			RefreshToken: account.RefreshToken,
-		})
+		return c.JSON(registerRefreshResponseFromEntAccount(account))
 	}
 }
 
@@ -162,13 +166,64 @@ func accountFromCtx(c *fiber.Ctx) *ent.Account {
 	return c.Locals("account").(*ent.Account)
 }
 
-func newGetAccountHandler() fiber.Handler {
+type accountResponse struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+}
+
+func accountResponseFromEntAccount(account *ent.Account) accountResponse {
+	return accountResponse{
+		ID:       account.ID,
+		Username: account.Username,
+	}
+}
+
+func newGetCurrentAccountHandler() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		account := accountFromCtx(c)
+		return c.JSON(accountResponseFromEntAccount(account))
+	}
+}
+
+func newListAccountsHandler(client *ent.Client) fiber.Handler {
 	type response struct {
-		Username string `json:"username"`
+		Accounts []accountResponse `json:"accounts"`
 	}
 
 	return func(c *fiber.Ctx) error {
-		account := accountFromCtx(c)
-		return c.JSON(response{Username: account.Username})
+		aq := client.Account.Query()
+		if username := c.Query("username"); username != "" {
+			aq = aq.Where(account.Username(username))
+		}
+
+		accounts, err := aq.All(c.Context())
+		if err != nil {
+			return err
+		}
+
+		resp := response{Accounts: make([]accountResponse, len(accounts))}
+		for i, account := range accounts {
+			resp.Accounts[i] = accountResponseFromEntAccount(account)
+		}
+		return c.JSON(resp)
+	}
+}
+
+func newGetAccountHandler(client *ent.Client) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id, err := c.ParamsInt("id")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+		}
+
+		account, err := client.Account.Get(c.Context(), id)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return c.Status(fiber.StatusNotFound).JSON(httphelper.StandardError{Message: "account not found"})
+			}
+			return err
+		}
+
+		return c.JSON(accountResponseFromEntAccount(account))
 	}
 }

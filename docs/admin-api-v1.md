@@ -195,10 +195,10 @@ PATCH /api/admin/v1/registration-tokens/:id
 #### Request
 
 ```
-DELETE /api/admin/v1/registration-tokens/:id{?purgeRegistrations=true}
+DELETE /api/admin/v1/registration-tokens/:id{?purge=true}
 ```
 
-- `purgeRegistrations`: Optional. If `true`, delete all accounts registered with the token.
+- `purge`: Optional. If `true`, delete all accounts registered with the token.
 
 #### Response: `204 No Content`
 
