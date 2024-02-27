@@ -3,7 +3,7 @@ module github.com/database64128/proxy-sharing-go
 go 1.22.0
 
 require (
-	entgo.io/ent v0.13.0
+	entgo.io/ent v0.13.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gofiber/contrib/fiberzap/v2 v2.1.2
 	github.com/gofiber/fiber/v2 v2.52.1
