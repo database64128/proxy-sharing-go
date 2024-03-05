@@ -7,7 +7,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gofiber/contrib/fiberzap/v2 v2.1.2
 	github.com/gofiber/fiber/v2 v2.52.2
-	github.com/jackc/pgx/v5 v5.5.3
+	github.com/jackc/pgx/v5 v5.5.4
 	github.com/mattn/go-sqlite3 v1.14.22
 	go.uber.org/zap v1.27.0
 	modernc.org/sqlite v1.29.2
