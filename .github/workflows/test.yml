@@ -33,7 +33,6 @@ jobs:
 
       - name: Build
         run: |
-          go env -w GOAMD64=v3
           go build -v -trimpath -ldflags '-s -w' ./cmd/proxy-sharing-go
 
       - name: Test
@@ -42,5 +41,5 @@ jobs:
       - name: Upload Binaries
         uses: actions/upload-artifact@v4
         with:
-          name: proxy-sharing-go-${{ github.sha }}-${{ matrix.os }}-x86-64-v3
+          name: proxy-sharing-go-${{ github.sha }}-${{ matrix.os }}-x86-64
           path: proxy-sharing-go*
