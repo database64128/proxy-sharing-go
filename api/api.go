@@ -92,16 +92,20 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
-		Fields: []string{"latency", "status", "method", "url", "ip"},
 	}))
-
-	if c.DebugPprof {
-		app.Use(pprof.New())
-	}
 
 	var router fiber.Router = app
 	if c.SecretPath != "" {
+		if c.SecretPath[0] != '/' {
+			c.SecretPath = "/" + c.SecretPath
+		}
 		router = app.Group(c.SecretPath)
+	}
+
+	if c.DebugPprof {
+		app.Use(pprof.New(pprof.Config{
+			Prefix: c.SecretPath,
+		}))
 	}
 
 	api := router.Group("/api")
