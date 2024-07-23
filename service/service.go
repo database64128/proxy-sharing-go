@@ -38,13 +38,13 @@ func (sc *Config) Manager(ctx context.Context, logger *zap.Logger) (*Manager, er
 
 // Service implements the business logic.
 type Service interface {
-	// String returns the relay service's name.
+	// String returns the service name.
 	String() string
 
-	// Start starts the relay service.
+	// Start starts the service.
 	Start(ctx context.Context) error
 
-	// Stop stops the relay service.
+	// Stop stops the service.
 	Stop() error
 }
 

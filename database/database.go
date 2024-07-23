@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -66,8 +65,8 @@ func (c *Config) Open(ctx context.Context, logger *zap.Logger) (*ent.Client, err
 
 	db.SetMaxOpenConns(c.MaxOpenConns)
 	db.SetMaxIdleConns(c.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime))
-	db.SetConnMaxIdleTime(time.Duration(c.ConnMaxIdleTime))
+	db.SetConnMaxLifetime(c.ConnMaxLifetime.Value())
+	db.SetConnMaxIdleTime(c.ConnMaxIdleTime.Value())
 
 	drv := entsql.OpenDB(c.Driver, db)
 	var opts []ent.Option
