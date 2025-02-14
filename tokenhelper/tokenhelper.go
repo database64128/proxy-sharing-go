@@ -5,15 +5,15 @@ package tokenhelper
 import "crypto/rand"
 
 // NewTokenBytes returns a new token as a byte slice.
-func NewTokenBytes() ([]byte, error) {
+func NewTokenBytes() []byte {
 	b := make([]byte, 32)
-	_, err := rand.Read(b)
-	return b, err
+	rand.Read(b)
+	return b
 }
 
 // NewAccessTokenAndRefreshTokenBytes returns a new access token and refresh token as byte slices.
-func NewAccessTokenAndRefreshTokenBytes() (accessToken, refreshToken []byte, err error) {
+func NewAccessTokenAndRefreshTokenBytes() (accessToken, refreshToken []byte) {
 	b := make([]byte, 64)
-	_, err = rand.Read(b)
-	return b[:32], b[32:], err
+	rand.Read(b)
+	return b[:32], b[32:]
 }

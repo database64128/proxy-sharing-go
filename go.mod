@@ -1,6 +1,6 @@
 module github.com/database64128/proxy-sharing-go
 
-go 1.23.0
+go 1.24.0
 
 require (
 	entgo.io/ent v0.14.1

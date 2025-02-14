@@ -111,10 +111,7 @@ func newCreateRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
 		}
 
-		b, err := tokenhelper.NewTokenBytes()
-		if err != nil {
-			return err
-		}
+		b := tokenhelper.NewTokenBytes()
 
 		token, err := client.RegistrationToken.Create().
 			SetName(req.Name).

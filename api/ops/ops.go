@@ -64,10 +64,7 @@ func newRegisterHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 			return err
 		}
 
-		accessToken, refreshToken, err := tokenhelper.NewAccessTokenAndRefreshTokenBytes()
-		if err != nil {
-			return err
-		}
+		accessToken, refreshToken := tokenhelper.NewAccessTokenAndRefreshTokenBytes()
 
 		account, err := client.Account.Create().
 			SetUsername(req.Username).
@@ -113,10 +110,7 @@ func newRefreshHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 			return err
 		}
 
-		accessToken, err := tokenhelper.NewTokenBytes()
-		if err != nil {
-			return err
-		}
+		accessToken := tokenhelper.NewTokenBytes()
 
 		account, err = account.Update().
 			SetAccessToken(accessToken).
