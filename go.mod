@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/mattn/go-sqlite3 v1.14.24
 	go.uber.org/zap v1.27.0
-	modernc.org/sqlite v1.34.5
+	modernc.org/sqlite v1.35.0
 )
 
 require (
@@ -42,11 +42,12 @@ require (
 	github.com/zclconf/go-cty v1.14.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	modernc.org/libc v1.55.3 // indirect
-	modernc.org/mathutil v1.6.0 // indirect
-	modernc.org/memory v1.8.0 // indirect
+	modernc.org/libc v1.61.13 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
+	modernc.org/memory v1.8.2 // indirect
 )
