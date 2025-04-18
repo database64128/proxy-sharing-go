@@ -7,8 +7,8 @@ import (
 	"github.com/database64128/proxy-sharing-go/ent"
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/ent/registrationtoken"
-	"github.com/database64128/proxy-sharing-go/httphelper"
-	"github.com/database64128/proxy-sharing-go/tokenhelper"
+	"github.com/database64128/proxy-sharing-go/httpx"
+	"github.com/database64128/proxy-sharing-go/tokens"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
@@ -53,18 +53,18 @@ func newRegisterHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req request
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		registrationToken, err := client.RegistrationToken.Query().Where(registrationtoken.Token(req.RegistrationToken)).Only(c.Context())
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusUnauthorized).JSON(httphelper.StandardError{Message: "invalid registration token"})
+				return c.Status(fiber.StatusUnauthorized).JSON(httpx.StandardError{Message: "invalid registration token"})
 			}
 			return err
 		}
 
-		accessToken, refreshToken := tokenhelper.NewAccessTokenAndRefreshTokenBytes()
+		accessToken, refreshToken := tokens.NewAccessTokenAndRefreshTokenBytes()
 
 		account, err := client.Account.Create().
 			SetUsername(req.Username).
@@ -74,10 +74,10 @@ func newRegisterHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 			Save(c.Context())
 		if err != nil {
 			if ent.IsValidationError(err) {
-				return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+				return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 			}
 			if ent.IsConstraintError(err) {
-				return c.Status(fiber.StatusConflict).JSON(httphelper.StandardError{Message: err.Error()})
+				return c.Status(fiber.StatusConflict).JSON(httpx.StandardError{Message: err.Error()})
 			}
 			return err
 		}
@@ -99,18 +99,18 @@ func newRefreshHandler(client *ent.Client, logger *zap.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req request
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		account, err := client.Account.Query().Where(account.RefreshToken(req.RefreshToken)).Only(c.Context())
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusUnauthorized).JSON(httphelper.StandardError{Message: "invalid refresh token"})
+				return c.Status(fiber.StatusUnauthorized).JSON(httpx.StandardError{Message: "invalid refresh token"})
 			}
 			return err
 		}
 
-		accessToken := tokenhelper.NewTokenBytes()
+		accessToken := tokens.NewTokenBytes()
 
 		account, err = account.Update().
 			SetAccessToken(accessToken).
@@ -135,18 +135,18 @@ func newAuthMiddleware(client *ent.Client) fiber.Handler {
 
 		auth := c.Get(fiber.HeaderAuthorization)
 		if len(auth) != len(bearerTokenFormat) || auth[:len(bearerPrefix)] != bearerPrefix {
-			return c.Status(fiber.StatusUnauthorized).JSON(httphelper.StandardError{Message: "missing or malformed access token"})
+			return c.Status(fiber.StatusUnauthorized).JSON(httpx.StandardError{Message: "missing or malformed access token"})
 		}
 
 		token, err := base64.StdEncoding.DecodeString(auth[len(bearerPrefix):])
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(httphelper.StandardError{Message: "malformed access token: " + err.Error()})
+			return c.Status(fiber.StatusUnauthorized).JSON(httpx.StandardError{Message: "malformed access token: " + err.Error()})
 		}
 
 		account, err := client.Account.Query().Where(account.AccessToken(token)).Only(c.Context())
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusUnauthorized).JSON(httphelper.StandardError{Message: "invalid access token"})
+				return c.Status(fiber.StatusUnauthorized).JSON(httpx.StandardError{Message: "invalid access token"})
 			}
 			return err
 		}
@@ -207,13 +207,13 @@ func newGetAccountHandler(client *ent.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := c.ParamsInt("id")
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		account, err := client.Account.Get(c.Context(), id)
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusNotFound).JSON(httphelper.StandardError{Message: "account not found"})
+				return c.Status(fiber.StatusNotFound).JSON(httpx.StandardError{Message: "account not found"})
 			}
 			return err
 		}

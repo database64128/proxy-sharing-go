@@ -5,8 +5,8 @@ import (
 
 	"github.com/database64128/proxy-sharing-go/ent"
 	"github.com/database64128/proxy-sharing-go/ent/account"
-	"github.com/database64128/proxy-sharing-go/httphelper"
-	"github.com/database64128/proxy-sharing-go/tokenhelper"
+	"github.com/database64128/proxy-sharing-go/httpx"
+	"github.com/database64128/proxy-sharing-go/tokens"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 	"go.uber.org/zap"
@@ -85,13 +85,13 @@ func newGetRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := c.ParamsInt("id")
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		token, err := client.RegistrationToken.Get(c.Context(), id)
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusNotFound).JSON(httphelper.StandardError{Message: "token not found"})
+				return c.Status(fiber.StatusNotFound).JSON(httpx.StandardError{Message: "token not found"})
 			}
 			return err
 		}
@@ -108,10 +108,10 @@ func newCreateRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req createUpdateRegistrationTokenRequest
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
-		b := tokenhelper.NewTokenBytes()
+		b := tokens.NewTokenBytes()
 
 		token, err := client.RegistrationToken.Create().
 			SetName(req.Name).
@@ -119,10 +119,10 @@ func newCreateRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			Save(c.Context())
 		if err != nil {
 			if ent.IsValidationError(err) {
-				return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+				return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 			}
 			if ent.IsConstraintError(err) {
-				return c.Status(fiber.StatusConflict).JSON(httphelper.StandardError{Message: err.Error()})
+				return c.Status(fiber.StatusConflict).JSON(httpx.StandardError{Message: err.Error()})
 			}
 			return err
 		}
@@ -135,12 +135,12 @@ func newRenameRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		id, err := c.ParamsInt("id")
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		var req createUpdateRegistrationTokenRequest
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		token, err := client.RegistrationToken.UpdateOneID(id).
@@ -148,13 +148,13 @@ func newRenameRegistrationTokenHandler(client *ent.Client) fiber.Handler {
 			Save(c.Context())
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusNotFound).JSON(httphelper.StandardError{Message: "token not found"})
+				return c.Status(fiber.StatusNotFound).JSON(httpx.StandardError{Message: "token not found"})
 			}
 			if ent.IsValidationError(err) {
-				return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+				return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 			}
 			if ent.IsConstraintError(err) {
-				return c.Status(fiber.StatusConflict).JSON(httphelper.StandardError{Message: err.Error()})
+				return c.Status(fiber.StatusConflict).JSON(httpx.StandardError{Message: err.Error()})
 			}
 			return err
 		}
@@ -167,7 +167,7 @@ func newDeleteRegistrationTokenHandler(client *ent.Client, logger *zap.Logger) f
 	return func(c *fiber.Ctx) error {
 		id, err := c.ParamsInt("id")
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(httphelper.StandardError{Message: err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(httpx.StandardError{Message: err.Error()})
 		}
 
 		if c.QueryBool("purge") {
@@ -182,7 +182,7 @@ func newDeleteRegistrationTokenHandler(client *ent.Client, logger *zap.Logger) f
 		err = client.RegistrationToken.DeleteOneID(id).Exec(c.Context())
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return c.Status(fiber.StatusNotFound).JSON(httphelper.StandardError{Message: "token not found"})
+				return c.Status(fiber.StatusNotFound).JSON(httpx.StandardError{Message: "token not found"})
 			}
 			return err
 		}

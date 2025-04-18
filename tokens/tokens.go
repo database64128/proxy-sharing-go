@@ -1,6 +1,6 @@
-// Package tokenhelper provides helper functions for working with tokens.
+// Package tokens provides utilities for working with tokens.
 // Tokens are assumed to be 32 bytes long.
-package tokenhelper
+package tokens
 
 import "crypto/rand"
 

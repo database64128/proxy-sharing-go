@@ -7,7 +7,7 @@ import (
 	"github.com/database64128/proxy-sharing-go/api/admin"
 	"github.com/database64128/proxy-sharing-go/api/ops"
 	"github.com/database64128/proxy-sharing-go/ent"
-	"github.com/database64128/proxy-sharing-go/jsonhelper"
+	"github.com/database64128/proxy-sharing-go/jsoncfg"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	fiberlog "github.com/gofiber/fiber/v2/log"
@@ -19,51 +19,51 @@ import (
 // Config stores the configuration for the RESTful API.
 type Config struct {
 	// DebugPprof enables pprof endpoints for debugging and profiling.
-	DebugPprof bool `json:"debugPprof"`
+	DebugPprof bool `json:"debugPprof,omitzero"`
 
 	// EnableTrustedProxyCheck enables trusted proxy checks.
-	EnableTrustedProxyCheck bool `json:"enableTrustedProxyCheck"`
+	EnableTrustedProxyCheck bool `json:"enableTrustedProxyCheck,omitzero"`
 
 	// TrustedProxies is the list of trusted proxies.
 	// This only takes effect if EnableTrustedProxyCheck is true.
-	TrustedProxies []string `json:"trustedProxies"`
+	TrustedProxies []string `json:"trustedProxies,omitzero"`
 
 	// ProxyHeader is the header used to determine the client's IP address.
 	// If empty, the remote peer's address is used.
-	ProxyHeader string `json:"proxyHeader"`
+	ProxyHeader string `json:"proxyHeader,omitzero"`
 
 	// ListenAddress is the address to listen on.
 	ListenAddress string `json:"listenAddress"`
 
 	// CertFile is the path to the certificate file.
 	// If empty, TLS is disabled.
-	CertFile string `json:"certFile"`
+	CertFile string `json:"certFile,omitzero"`
 
 	// KeyFile is the path to the key file.
 	// This is required if CertFile is set.
-	KeyFile string `json:"keyFile"`
+	KeyFile string `json:"keyFile,omitzero"`
 
 	// ClientCertFile is the path to the client certificate file.
 	// If empty, client certificate authentication is disabled.
-	ClientCertFile string `json:"clientCertFile"`
+	ClientCertFile string `json:"clientCertFile,omitzero"`
 
 	// StaticPath is the path where static files are served from.
 	// If empty, static file serving is disabled.
-	StaticPath string `json:"staticPath"`
+	StaticPath string `json:"staticPath,omitzero"`
 
 	// SecretPath adds a secret path prefix to all routes.
 	// If empty, no secret path is added.
-	SecretPath string `json:"secretPath"`
+	SecretPath string `json:"secretPath,omitzero"`
 
 	// FiberConfigPath overrides the [fiber.Config] settings we use.
 	// If empty, no overrides are applied.
-	FiberConfigPath string `json:"fiberConfigPath"`
+	FiberConfigPath string `json:"fiberConfigPath,omitzero"`
 
 	// Admin is the configuration for the admin API.
-	Admin admin.Config `json:"admin"`
+	Admin admin.Config `json:"admin,omitzero"`
 
 	// OpenProxySharing is the configuration for the Open Proxy Sharing API.
-	OpenProxySharing ops.Config `json:"openProxySharing"`
+	OpenProxySharing ops.Config `json:"openProxySharing,omitzero"`
 }
 
 // Server returns a new API server from the config.
@@ -81,7 +81,7 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 	}
 
 	if c.FiberConfigPath != "" {
-		if err := jsonhelper.OpenAndDecodeDisallowUnknownFields(c.FiberConfigPath, &fc); err != nil {
+		if err := jsoncfg.Open(c.FiberConfigPath, &fc); err != nil {
 			return nil, err
 		}
 	}

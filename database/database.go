@@ -9,7 +9,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/database64128/proxy-sharing-go/ent"
 	"github.com/database64128/proxy-sharing-go/ent/migrate"
-	"github.com/database64128/proxy-sharing-go/jsonhelper"
+	"github.com/database64128/proxy-sharing-go/jsoncfg"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
@@ -24,22 +24,22 @@ type Config struct {
 	DSN string `json:"dsn"`
 
 	// MaxOpenConns is the maximum number of open connections to the database.
-	MaxOpenConns int `json:"maxOpenConns"`
+	MaxOpenConns int `json:"maxOpenConns,omitzero"`
 
 	// MaxIdleConns is the maximum number of connections in the idle connection pool.
-	MaxIdleConns int `json:"maxIdleConns"`
+	MaxIdleConns int `json:"maxIdleConns,omitzero"`
 
 	// ConnMaxLifetime is the maximum amount of time a connection may be reused.
-	ConnMaxLifetime jsonhelper.Duration `json:"connMaxLifetime"`
+	ConnMaxLifetime jsoncfg.Duration `json:"connMaxLifetime,omitzero"`
 
 	// ConnMaxIdleTime is the maximum amount of time a connection may be idle.
-	ConnMaxIdleTime jsonhelper.Duration `json:"connMaxIdleTime"`
+	ConnMaxIdleTime jsoncfg.Duration `json:"connMaxIdleTime,omitzero"`
 
 	// Debug enables verbose logging.
-	Debug bool `json:"debug"`
+	Debug bool `json:"debug,omitzero"`
 
 	// NoAutoMigrate disables auto-migration.
-	NoAutoMigrate bool `json:"noAutoMigrate"`
+	NoAutoMigrate bool `json:"noAutoMigrate,omitzero"`
 }
 
 // Open opens the database and runs auto-migration.
