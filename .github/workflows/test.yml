@@ -32,8 +32,7 @@ jobs:
           go-version: stable
 
       - name: Build
-        run: |
-          go build -v -trimpath -ldflags '-s -w' ./cmd/proxy-sharing-go
+        run: go build -v -trimpath -ldflags '-s -w' ./cmd/proxy-sharing-go
 
       - name: Test
         run: go test -v ./...
