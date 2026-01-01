@@ -8,7 +8,7 @@ require (
 	github.com/gofiber/contrib/fiberzap/v2 v2.1.6
 	github.com/gofiber/fiber/v2 v2.52.10
 	github.com/jackc/pgx/v5 v5.8.0
-	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/mattn/go-sqlite3 v1.14.33
 	go.uber.org/zap v1.27.1
 	modernc.org/sqlite v1.42.2
 )
