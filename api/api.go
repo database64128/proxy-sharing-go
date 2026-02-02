@@ -9,10 +9,10 @@ import (
 	"github.com/database64128/proxy-sharing-go/ent"
 	"github.com/database64128/proxy-sharing-go/jsoncfg"
 	"github.com/gofiber/contrib/fiberzap/v2"
-	"github.com/gofiber/fiber/v2"
-	fiberlog "github.com/gofiber/fiber/v2/log"
-	"github.com/gofiber/fiber/v2/middleware/etag"
-	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/fiber/v3"
+	fiberlog "github.com/gofiber/fiber/v3/log"
+	"github.com/gofiber/fiber/v3/middleware/etag"
+	"github.com/gofiber/fiber/v3/middleware/pprof"
 	"go.uber.org/zap"
 )
 

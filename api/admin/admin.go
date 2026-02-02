@@ -7,8 +7,8 @@ import (
 	"github.com/database64128/proxy-sharing-go/ent/account"
 	"github.com/database64128/proxy-sharing-go/httpx"
 	"github.com/database64128/proxy-sharing-go/tokens"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/keyauth"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/keyauth"
 	"go.uber.org/zap"
 )
 
