@@ -8,11 +8,12 @@ import (
 	"github.com/database64128/proxy-sharing-go/api/ops"
 	"github.com/database64128/proxy-sharing-go/ent"
 	"github.com/database64128/proxy-sharing-go/jsoncfg"
-	"github.com/gofiber/contrib/fiberzap/v2"
-	"github.com/gofiber/fiber/v2"
-	fiberlog "github.com/gofiber/fiber/v2/log"
-	"github.com/gofiber/fiber/v2/middleware/etag"
-	"github.com/gofiber/fiber/v2/middleware/pprof"
+	fiberzap "github.com/gofiber/contrib/v3/zap"
+	"github.com/gofiber/fiber/v3"
+	fiberlog "github.com/gofiber/fiber/v3/log"
+	"github.com/gofiber/fiber/v3/middleware/etag"
+	"github.com/gofiber/fiber/v3/middleware/pprof"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	"go.uber.org/zap"
 )
 
@@ -32,8 +33,15 @@ type Config struct {
 	// If empty, the remote peer's address is used.
 	ProxyHeader string `json:"proxyHeader,omitzero"`
 
+	// ListenNetwork is the network type.
+	ListenNetwork string `json:"listenNetwork,omitzero"`
+
 	// ListenAddress is the address to listen on.
 	ListenAddress string `json:"listenAddress"`
+
+	// ListenMode optionally sets the file mode of the unix domain socket.
+	// It must be an octal number in a string (e.g., "0660").
+	ListenMode jsoncfg.FileMode `json:"listenMode,omitzero"`
 
 	// CertFile is the path to the certificate file.
 	// If empty, TLS is disabled.
@@ -73,11 +81,11 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 	}))
 
 	fc := fiber.Config{
-		ProxyHeader:             c.ProxyHeader,
-		DisableStartupMessage:   true,
-		Network:                 "tcp",
-		EnableTrustedProxyCheck: c.EnableTrustedProxyCheck,
-		TrustedProxies:          c.TrustedProxies,
+		ProxyHeader: c.ProxyHeader,
+		TrustProxy:  c.EnableTrustedProxyCheck,
+		TrustProxyConfig: fiber.TrustProxyConfig{
+			Proxies: c.TrustedProxies,
+		},
 	}
 
 	if c.FiberConfigPath != "" {
@@ -117,15 +125,22 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 	c.OpenProxySharing.RegisterRoutes(api.Group("/ops/v1"), client, logger)
 
 	if c.StaticPath != "" {
-		router.Static("/", c.StaticPath, fiber.Static{
+		router.Use(static.New(c.StaticPath, static.Config{
 			ByteRange: true,
-		})
+		}))
+	}
+
+	listenNetwork := c.ListenNetwork
+	if listenNetwork == "" {
+		listenNetwork = "tcp"
 	}
 
 	return &Server{
 		logger:         logger,
 		app:            app,
+		listenNetwork:  listenNetwork,
 		listenAddress:  c.ListenAddress,
+		listenMode:     c.ListenMode,
 		certFile:       c.CertFile,
 		keyFile:        c.KeyFile,
 		clientCertFile: c.ClientCertFile,
@@ -136,7 +151,9 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 type Server struct {
 	logger         *zap.Logger
 	app            *fiber.App
+	listenNetwork  string
 	listenAddress  string
+	listenMode     jsoncfg.FileMode
 	certFile       string
 	keyFile        string
 	clientCertFile string
@@ -153,16 +170,15 @@ func (s *Server) Start(ctx context.Context) error {
 	s.logger.Info("Starting API server", zap.String("listenAddress", s.listenAddress))
 	s.ctx = ctx
 	go func() {
-		var err error
-		switch {
-		case s.clientCertFile != "":
-			err = s.app.ListenMutualTLS(s.listenAddress, s.certFile, s.keyFile, s.clientCertFile)
-		case s.certFile != "":
-			err = s.app.ListenTLS(s.listenAddress, s.certFile, s.keyFile)
-		default:
-			err = s.app.Listen(s.listenAddress)
+		flc := fiber.ListenConfig{
+			ListenerNetwork:       s.listenNetwork,
+			CertFile:              s.certFile,
+			CertKeyFile:           s.keyFile,
+			CertClientFile:        s.clientCertFile,
+			UnixSocketFileMode:    s.listenMode.Value(),
+			DisableStartupMessage: true,
 		}
-		if err != nil {
+		if err := s.app.Listen(s.listenAddress, flc); err != nil {
 			s.logger.Fatal("Failed to start API server", zap.Error(err))
 		}
 	}()
