@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	entgo.io/ent v0.14.5
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/gofiber/contrib/v3/zap v1.0.0
+	github.com/gofiber/contrib/v3/zap v1.0.1
 	github.com/gofiber/fiber/v3 v3.1.0
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/mattn/go-sqlite3 v1.14.34
@@ -46,7 +46,7 @@ require (
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
 	golang.org/x/mod v0.32.0 // indirect
-	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
