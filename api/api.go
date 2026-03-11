@@ -89,7 +89,7 @@ func (c *Config) Server(logger *zap.Logger, client *ent.Client) (*Server, error)
 	}
 
 	if c.FiberConfigPath != "" {
-		if err := jsoncfg.Open(c.FiberConfigPath, &fc); err != nil {
+		if err := jsoncfg.Load(c.FiberConfigPath, &fc); err != nil {
 			return nil, err
 		}
 	}

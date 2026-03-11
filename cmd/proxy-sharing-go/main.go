@@ -56,7 +56,7 @@ func main() {
 	logger.Info("proxy-sharing-go", zap.String("version", proxysharinggo.Version))
 
 	var sc service.Config
-	if err = jsoncfg.Open(confPath, &sc); err != nil {
+	if err = jsoncfg.Load(confPath, &sc); err != nil {
 		logger.Fatal("Failed to load config",
 			zap.String("confPath", confPath),
 			zap.Error(err),
