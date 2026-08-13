@@ -6,7 +6,7 @@ require (
 	entgo.io/ent v0.14.6
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/contrib/v3/zap v1.0.10
-	github.com/gofiber/fiber/v3 v3.4.0
+	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/mattn/go-sqlite3 v1.14.49
 	go.uber.org/zap v1.28.0
@@ -30,7 +30,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
