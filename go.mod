@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/mattn/go-sqlite3 v1.14.50
 	go.uber.org/zap v1.28.0
-	modernc.org/sqlite v1.56.0
+	modernc.org/sqlite v1.57.0
 )
 
 require (
