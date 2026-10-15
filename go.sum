@@ -25,8 +25,8 @@ github.com/go-sql-driver/mysql v1.10.1 h1:arlSnNLq6a5yxGxV7qg9lF4j0C+KwD6NbQyKr9
 github.com/go-sql-driver/mysql v1.10.1/go.mod h1:M+cqaI7+xxXGG9swrdeUIoPG3Y3KCkF0pZej+SK+nWk=
 github.com/go-test/deep v1.0.3 h1:ZrJSEWsXzPOxaZnFteGEfooLba+ju3FYIbOrS+rQd68=
 github.com/go-test/deep v1.0.3/go.mod h1:wGDj63lr65AM2AQyKZd/NYHGb0R+1RLqB8NKt3aSFNA=
-github.com/gofiber/contrib/v3/zap v1.0.13 h1:pnWtvbhm6ifNWi7NZWa5cfR9aHmewG1sX4lXinY6hLQ=
-github.com/gofiber/contrib/v3/zap v1.0.13/go.mod h1:D8sv66ndIGH9kYXdhnB7j161IxG+3AWDJZAHE14X/v8=
+github.com/gofiber/contrib/v3/zap v1.0.14 h1:UTRq88XDKlF03MBct7MYIYHPyqs+6lmAOc51aUaxBXQ=
+github.com/gofiber/contrib/v3/zap v1.0.14/go.mod h1:nVBdkkZaYZf8a4NEGEFXFH30ZoFHwAaRvA0OAZ6HPzE=
 github.com/gofiber/fiber/v3 v3.6.1 h1:wYjbgqpJm6VErIVLSGzGpX7lLZyTNgElsj8nQ1i+iFo=
 github.com/gofiber/fiber/v3 v3.6.1/go.mod h1:+nxjBal3gw0EPf3gqK5EmtxaxTL01+zbSTagFletlDI=
 github.com/gofiber/schema v1.8.8 h1:md5t65+Z9LttOuj7FdMcQ63D2+6GniT2ganLXwvTJM4=
