@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	entgo.io/ent v0.14.6
 	github.com/go-sql-driver/mysql v1.10.2
-	github.com/gofiber/contrib/v3/zap v1.0.18
+	github.com/gofiber/contrib/v3/zap v1.0.19
 	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/mattn/go-sqlite3 v1.14.53
@@ -21,7 +21,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/go-openapi/inflect v0.21.5 // indirect
-	github.com/gofiber/schema v1.9.4 // indirect
+	github.com/gofiber/schema v1.10.0 // indirect
 	github.com/gofiber/utils/v2 v2.6.5 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -40,13 +40,13 @@ require (
 	github.com/rogpeppe/go-internal v1.16.0 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.78.0 // indirect
+	github.com/valyala/fasthttp v1.79.0 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.2.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/net v0.63.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
