@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/go-sql-driver/mysql v1.10.2
+	github.com/go-sql-driver/mysql v1.11.0
 	github.com/gofiber/contrib/v3/zap v1.0.20
 	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/jackc/pgx/v5 v5.13.0
